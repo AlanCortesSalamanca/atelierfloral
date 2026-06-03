@@ -1,6 +1,42 @@
-node_modules
-.next
-out
-dist
-.env*.local
+# Dependencies
+node_modules/
+
+# Next.js build
+.next/
+out/
+
+# Production build
+dist/
+build/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# TypeScript
 *.tsbuildinfo
+next-env.d.ts
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+
+# Supabase
+supabase/.temp/
