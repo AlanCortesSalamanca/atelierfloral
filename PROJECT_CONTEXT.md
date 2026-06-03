@@ -85,6 +85,16 @@ Uso actual:
 - Mostrar destacados con `featured = true`.
 - La página de producto busca por `slug`.
 
+Estado actual:
+
+- Los productos se obtienen correctamente desde Supabase.
+- Hay 11 productos activos.
+- Todos los productos activos tienen `featured = true`.
+- Categorías con datos: `velas` (6), `recuerdos` (3), `kits` (1), `personalizados` (1).
+- La categoría `Suculentas` existe en la UI, pero todavía no tiene productos en Supabase.
+- Las imágenes de productos vienen desde Supabase Storage con URLs firmadas guardadas en `image` y `gallery_images`.
+- `materials` viene desde Supabase como arreglo JSON (`jsonb`) en los productos actuales.
+
 ### `quote_requests`
 
 Columnas esperadas:
@@ -195,6 +205,15 @@ public/images/
 8. Se abre WhatsApp con `getWhatsAppUrl`.
 9. Se limpia la cotización local.
 
+## Tipos Y Datos De Productos
+
+- `Product.id` está tipado como `number` porque Supabase devuelve IDs numéricos.
+- `QuoteItem.productId` se mantiene como `string` para compatibilidad con `localStorage` y el flujo de cotización.
+- `productToQuoteItem()` convierte `product.id` con `String(product.id)`.
+- `QuoteProvider.addProduct()` también compara usando `String(product.id)`.
+- `Product.materials` acepta `string[] | string | null` porque Supabase devuelve `jsonb` como arreglo.
+- `ProductDetailClient` convierte `materials` a texto legible con `join(", ")` antes de renderizarlo.
+
 ## Imágenes
 
 Las imágenes locales son PNG, no JPG.
@@ -243,7 +262,17 @@ npm run typecheck
 npm run build
 ```
 
-Estado más reciente: los tres comandos pasan correctamente.
+Estado más reciente: los productos se obtienen correctamente desde Supabase y los tres comandos pasan correctamente.
+
+- `npm run lint` ✅
+- `npm run typecheck` ✅
+- `npm run build` ✅
+
+Nota de entorno local:
+
+- En VS Code con WSL Ubuntu, usar Node instalado dentro de WSL mediante `nvm`.
+- No mezclar shell WSL con `node.exe`/`npm` de Windows, porque puede generar `.next` incompleto y errores 404 en `/_next/static/...`.
+- Si aparecen 404 de chunks/assets en desarrollo, detener `npm run dev`, borrar `.next` y reiniciar con Node de WSL.
 
 ## Notas De Seguridad Y Supabase
 

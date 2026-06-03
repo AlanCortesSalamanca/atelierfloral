@@ -14,7 +14,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [selectedImage, setSelectedImage] = useState(product.image);
   const { addProduct } = useQuote();
   const gallery = [product.image, ...(product.gallery_images ?? [])].filter(Boolean) as string[];
-  const whatsappUrl = getWhatsAppUrl(buildWhatsAppMessage([{ ...productToQuoteItem(product, quantity) }]));
+  const materials = Array.isArray(product.materials) ? product.materials.join(", ") : product.materials;
+  const whatsappUrl = getWhatsAppUrl(buildWhatsAppMessage([productToQuoteItem(product, quantity)]));
 
   return (
     <main className="container-page section-pad">
@@ -43,7 +44,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
           {product.description ? <p className="mt-5 text-lg leading-8 text-coffee">{product.description}</p> : null}
 
           <div className="mt-7 grid gap-3 text-sm text-coffee">
-            {product.materials ? <DetailRow label="Materiales" value={product.materials} /> : null}
+            {materials ? <DetailRow label="Materiales" value={materials} /> : null}
             {product.fragrance ? <DetailRow label="Fragancia" value={product.fragrance} /> : null}
             {product.dimensions ? <DetailRow label="Dimensiones" value={product.dimensions} /> : null}
             {product.handcrafted_details ? <DetailRow label="Detalles artesanales" value={product.handcrafted_details} /> : null}

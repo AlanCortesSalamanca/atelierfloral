@@ -41,10 +41,12 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
   }, [items, loaded]);
 
   function addProduct(product: Product, quantity = 1) {
+    const productId = String(product.id);
+
     setItems((current) => {
-      const existing = current.find((item) => item.productId === product.id);
+      const existing = current.find((item) => item.productId === productId);
       if (existing) {
-        return current.map((item) => (item.productId === product.id ? { ...item, quantity: item.quantity + quantity } : item));
+        return current.map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + quantity } : item));
       }
       return [...current, productToQuoteItem(product, quantity)];
     });

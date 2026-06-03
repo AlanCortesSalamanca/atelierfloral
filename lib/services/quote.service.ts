@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 
 export function productToQuoteItem(product: Product, quantity = 1): QuoteItem {
   return {
-    productId: product.id,
+    productId: String(product.id),
     slug: product.slug,
     name: product.name,
     category: product.category,

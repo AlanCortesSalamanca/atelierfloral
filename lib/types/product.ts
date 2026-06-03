@@ -1,7 +1,7 @@
 export type ProductCategory = "Velas" | "Suculentas" | "Recuerdos" | "Kits" | "Personalizados" | string;
 
 export type Product = {
-  id: string;
+  id: number;
   name: string;
   category: ProductCategory;
   price: number | null;
@@ -10,7 +10,7 @@ export type Product = {
   featured: boolean | null;
   image: string | null;
   gallery_images: string[] | null;
-  materials: string | null;
+  materials: string[] | string | null;
   fragrance: string | null;
   dimensions: string | null;
   handcrafted_details: string | null;
