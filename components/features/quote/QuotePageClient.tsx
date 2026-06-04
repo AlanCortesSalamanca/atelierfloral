@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { ProductImage } from "@/components/features/products/ProductImage";
 import { useQuote } from "@/hooks/useQuote";
-import { getSupabaseClient } from "@/lib/db/supabase";
 import { buildWhatsAppMessage } from "@/lib/services/quote.service";
 import { getWhatsAppUrl } from "@/lib/services/whatsapp.service";
 import type { QuoteFormData, QuoteRequestInsert } from "@/lib/types";
@@ -19,6 +18,8 @@ const initialForm: QuoteFormData = {
   event_date: "",
   custom_notes: "",
 };
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function QuotePageClient() {
   const { items, increase, decrease, remove, clear, subtotal, totalPieces } = useQuote();
@@ -40,6 +41,16 @@ export function QuotePageClient() {
       return;
     }
 
+    if (form.customer_phone.replace(/\D/g, "").length < 10) {
+      setError("Escribe un teléfono válido con al menos 10 dígitos.");
+      return;
+    }
+
+    if (form.customer_email.trim() && !emailPattern.test(form.customer_email.trim())) {
+      setError("Escribe un email válido o deja el campo vacío.");
+      return;
+    }
+
     setIsSubmitting(true);
     const payload: QuoteRequestInsert = {
       customer_name: form.customer_name.trim(),
@@ -56,15 +67,13 @@ export function QuotePageClient() {
       custom_notes: form.custom_notes.trim() || null,
     };
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setError("No se pudo enviar la cotización en este momento. Inténtalo de nuevo más tarde.");
-      setIsSubmitting(false);
-      return;
-    }
+    const response = await fetch("/api/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-    const { error: insertError } = await supabase.from("quote_requests").insert(payload);
-    if (insertError) {
+    if (!response.ok) {
       setError("No se pudo enviar la cotización en este momento. Inténtalo de nuevo más tarde.");
       setIsSubmitting(false);
       return;
@@ -146,8 +155,13 @@ export function QuotePageClient() {
           <label className="mt-4 block text-sm font-semibold text-ink">
             Notas adicionales
             <textarea value={form.custom_notes} onChange={(event) => setForm({ ...form, custom_notes: event.target.value })} rows={5} maxLength={800} className="mt-2 w-full rounded-3xl border border-beige bg-cream/70 px-4 py-3 outline-none focus:border-gold" />
+            <span className="mt-1 block text-right text-xs font-medium text-coffee">{form.custom_notes.length}/800</span>
           </label>
-          {error ? <p className="mt-4 rounded-2xl bg-blush/20 p-3 text-sm font-semibold text-ink">{error}</p> : null}
+          {error ? (
+            <p role="alert" className="mt-4 rounded-2xl bg-blush/20 p-3 text-sm font-semibold text-ink">
+              {error}
+            </p>
+          ) : null}
           <button type="submit" disabled={isSubmitting} className="mt-6 w-full rounded-full bg-ink px-6 py-4 font-semibold text-cream shadow-card transition hover:bg-coffee disabled:cursor-not-allowed disabled:opacity-60">
             {isSubmitting ? "Enviando..." : "Guardar y cotizar por WhatsApp"}
           </button>

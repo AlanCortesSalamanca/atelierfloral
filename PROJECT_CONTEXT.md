@@ -37,6 +37,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_WHATSAPP_PHONE=
 ```
 
+`.env.local.example` debe mantenerse versionado para onboarding. `.env.local` debe quedar ignorado por git.
+
 ## MCP Supabase
 
 Configurado en `opencode.json`:
@@ -133,9 +135,14 @@ app/
     loading.tsx
   cotizacion/
     page.tsx
+    loading.tsx
+  api/
+    quote/
+      route.ts
   productos/[slug]/
     page.tsx
     loading.tsx
+  not-found.tsx
 
 components/
   features/
@@ -192,6 +199,7 @@ public/images/
 - `/catalogo`: catálogo con productos activos y filtro por categoría.
 - `/productos/[slug]`: detalle de producto.
 - `/cotizacion`: resumen de cotización, formulario, guardado en Supabase y redirección a WhatsApp.
+- `/api/quote`: Route Handler para validar y guardar cotizaciones en `quote_requests`.
 
 ## Flujo De Cotización
 
@@ -200,10 +208,25 @@ public/images/
 3. La cotización se persiste en `localStorage` con key `atelier-floral-quote`.
 4. `/cotizacion` muestra productos, cantidades, subtotal y total de piezas.
 5. El usuario completa datos personales y de evento.
-6. Se inserta un registro en `quote_requests` usando Supabase anon key.
-7. Se genera un mensaje con `buildWhatsAppMessage`.
-8. Se abre WhatsApp con `getWhatsAppUrl`.
-9. Se limpia la cotización local.
+6. `/cotizacion` envía el payload a `/api/quote`.
+7. `/api/quote` valida datos básicos del cliente, items y email opcional.
+8. Se inserta un registro en `quote_requests` usando Supabase desde el Route Handler.
+9. Se genera un mensaje con `buildWhatsAppMessage`.
+10. Se abre WhatsApp con `getWhatsAppUrl`.
+11. Se limpia la cotización local.
+
+## Catálogo
+
+- `/catalogo` obtiene todos los productos activos desde Supabase en Server Component.
+- El filtrado por categoría ocurre en `CatalogClient`.
+- El filtro es case-insensitive porque Supabase almacena categorías actuales en minúsculas (`velas`, `recuerdos`, etc.) y la UI muestra etiquetas capitalizadas (`Velas`, `Recuerdos`, etc.).
+- Al cambiar categoría, `CatalogClient` sincroniza el query param `categoria` en la URL con `router.replace(..., { scroll: false })`.
+
+## Estados De UI
+
+- Hay loading states para `/`, `/catalogo`, `/productos/[slug]` y `/cotizacion`.
+- Hay `app/error.tsx` global.
+- Hay `app/not-found.tsx` personalizado y alineado con el diseño del sitio.
 
 ## Tipos Y Datos De Productos
 
@@ -279,7 +302,9 @@ Nota de entorno local:
 - El cliente Supabase usa anon key pública, patrón normal en Supabase.
 - La seguridad depende de RLS.
 - `products` necesita permitir `SELECT` anónimo para productos activos.
-- `quote_requests` necesita permitir `INSERT` anónimo si se mantiene este flujo client-side.
+- `quote_requests` necesita permitir `INSERT` anónimo porque `/api/quote` usa anon key, no `service_role`.
+- Actualmente el insert de cotizaciones pasa por `/api/quote`, pero sigue usando el cliente Supabase con anon key. La seguridad de escritura sigue dependiendo de RLS.
+- Recomendación pendiente: `quote_requests` no debería permitir `SELECT`, `UPDATE` ni `DELETE` anónimo.
 - No usar `service_role` en frontend.
 - No exponer mensajes técnicos de Supabase/RLS al usuario final.
 
@@ -287,5 +312,5 @@ Nota de entorno local:
 
 - Confirmar que las imágenes PNG existan físicamente en `public/images`.
 - Confirmar políticas RLS en Supabase.
-- Considerar mover el insert de cotización a Route Handler o Server Action si se requiere validación server-side más fuerte.
+- Considerar endurecer validación de `/api/quote` y agregar rate limiting si aumenta el tráfico.
 - Considerar tests unitarios para `quote.service.ts`, `currency.ts` y componentes UI.
