@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { siteConfig } from "@/lib/config";
 
+function isSameOrigin(request: Request, origin: string): boolean {
+  const host = request.headers.get("host");
+  if (!host) return false;
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  return origin === `${proto}://${host}` || origin === `http://${host}`;
+}
+
 export function getCorsOrigin(request: Request): string | null {
   const origin = request.headers.get("origin");
   if (!origin) return null;
+
+  if (isSameOrigin(request, origin)) return origin;
 
   const allowed = siteConfig.allowedOrigins;
   if (allowed.includes(origin)) return origin;
