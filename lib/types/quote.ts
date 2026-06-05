@@ -23,6 +23,11 @@ export type QuoteRequestInsert = {
   custom_notes?: string | null;
 };
 
+export type QuoteRequest = QuoteRequestInsert & {
+  id: string | number;
+  created_at: string | null;
+};
+
 export type QuoteFormData = {
   customer_name: string;
   customer_phone: string;

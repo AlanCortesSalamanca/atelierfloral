@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { hasSupabaseConfig, siteConfig } from "@/lib/config";
+import { hasSupabaseAdminConfig, hasSupabaseConfig, siteConfig } from "@/lib/config";
 
 export function getSupabaseClient() {
   if (!hasSupabaseConfig()) {
@@ -7,4 +7,21 @@ export function getSupabaseClient() {
   }
 
   return createClient(siteConfig.supabaseUrl, siteConfig.supabaseAnonKey);
+}
+
+export function getSupabaseBrowserClient() {
+  return getSupabaseClient();
+}
+
+export function getSupabaseAdminClient() {
+  if (!hasSupabaseAdminConfig()) {
+    return null;
+  }
+
+  return createClient(siteConfig.supabaseUrl, siteConfig.supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

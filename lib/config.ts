@@ -1,9 +1,15 @@
 export const siteConfig = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   whatsappPhone: process.env.NEXT_PUBLIC_WHATSAPP_PHONE ?? "",
+  productImagesBucket: process.env.NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET ?? "product-images",
 };
 
 export function hasSupabaseConfig() {
   return Boolean(siteConfig.supabaseUrl && siteConfig.supabaseAnonKey);
+}
+
+export function hasSupabaseAdminConfig() {
+  return Boolean(siteConfig.supabaseUrl && siteConfig.supabaseServiceRoleKey);
 }
