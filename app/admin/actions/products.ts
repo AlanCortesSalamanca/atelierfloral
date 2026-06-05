@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAuthenticatedAdminClient } from "@/app/admin/actions/admin-client";
 import { siteConfig } from "@/lib/config";
+import { sanitizeProductText, sanitizeText } from "@/lib/utils/sanitize";
 
 const maxImageSize = 5 * 1024 * 1024;
 
@@ -131,24 +132,24 @@ async function uploadGallery(supabase: SupabaseClient, formData: FormData, fallb
 }
 
 function productPayload(formData: FormData, image: string | null, galleryImages: string[] | null) {
-  const name = String(formData.get("name") ?? "").trim();
-  const slug = optionalText(formData, "slug") ?? slugify(name);
+  const name = sanitizeText(String(formData.get("name") ?? ""), 200);
+  const slug = sanitizeText(optionalText(formData, "slug") ?? slugify(name), 200);
 
   return {
     name,
     slug,
-    category: String(formData.get("category") ?? "").trim(),
+    category: sanitizeText(String(formData.get("category") ?? ""), 100),
     price: optionalNumber(formData, "price"),
-    description: optionalText(formData, "description"),
+    description: sanitizeProductText(optionalText(formData, "description"), 2000),
     stock: optionalNumber(formData, "stock"),
     featured: checkbox(formData, "featured"),
     active: checkbox(formData, "active"),
     image,
     gallery_images: galleryImages,
     materials: parseMaterials(optionalText(formData, "materials")),
-    fragrance: optionalText(formData, "fragrance"),
-    dimensions: optionalText(formData, "dimensions"),
-    handcrafted_details: optionalText(formData, "handcrafted_details"),
+    fragrance: sanitizeProductText(optionalText(formData, "fragrance"), 200),
+    dimensions: sanitizeProductText(optionalText(formData, "dimensions"), 200),
+    handcrafted_details: sanitizeProductText(optionalText(formData, "handcrafted_details"), 2000),
   };
 }
 
