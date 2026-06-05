@@ -20,7 +20,7 @@ export async function getAuthenticatedAdminClient() {
 
   const adminClient = getSupabaseAdminClient();
   if (!adminClient) {
-    throw new Error("Falta configurar SUPABASE_SERVICE_ROLE_KEY en .env.local.");
+    throw new Error("Error de configuración del servidor. Contacta al administrador.");
   }
 
   return adminClient;

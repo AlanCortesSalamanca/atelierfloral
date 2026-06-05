@@ -11,7 +11,8 @@ export async function cancelQuote(formData: FormData) {
 
   const { error } = await supabase.from("quote_requests").update({ status: "cancelled" }).eq("id", id);
   if (error) {
-    throw new Error(`No se pudo cancelar la cotización: ${error.message}`);
+    console.error("[cancelQuote] Supabase error:", error.message);
+    throw new Error("No se pudo cancelar la cotización. Intenta de nuevo.");
   }
 
   revalidatePath("/admin");

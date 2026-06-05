@@ -8,6 +8,19 @@ import { siteConfig } from "@/lib/config";
 
 const maxImageSize = 5 * 1024 * 1024;
 
+const IMAGE_MAGIC_BYTES: Record<string, Uint8Array[]> = {
+  "image/png": [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])],
+  "image/jpeg": [new Uint8Array([255, 216, 255])],
+  "image/webp": [new Uint8Array([82, 73, 70, 70])],
+  "image/gif": [new Uint8Array([71, 73, 70, 56])],
+};
+
+function validateImageMagicBytes(buffer: Uint8Array, mimeType: string): boolean {
+  const signatures = IMAGE_MAGIC_BYTES[mimeType];
+  if (!signatures) return false;
+  return signatures.some((sig) => sig.every((byte, i) => buffer[i] === byte));
+}
+
 async function getAdminClient() {
   return getAuthenticatedAdminClient();
 }
@@ -55,7 +68,8 @@ async function ensureProductImagesBucket(supabase: SupabaseClient) {
   });
 
   if (createError && !createError.message.toLowerCase().includes("already exists")) {
-    throw new Error(`No se pudo preparar el bucket ${siteConfig.productImagesBucket}: ${createError.message}`);
+    console.error("[ensureProductImagesBucket] Error:", createError.message);
+    throw new Error("Error al preparar el almacenamiento de imágenes.");
   }
 }
 
@@ -73,6 +87,11 @@ async function uploadImage(supabase: SupabaseClient, formData: FormData, key: st
     throw new Error("Cada imagen debe pesar máximo 5 MB.");
   }
 
+  const buffer = new Uint8Array(await file.arrayBuffer());
+  if (!validateImageMagicBytes(buffer, file.type)) {
+    throw new Error("El archivo no es una imagen válida (formato corrupto o incorrecto).");
+  }
+
   await ensureProductImagesBucket(supabase);
 
   const safeName = file.name
@@ -80,14 +99,14 @@ async function uploadImage(supabase: SupabaseClient, formData: FormData, key: st
     .replace(/[^a-z0-9.]+/g, "-")
     .replace(/(^-|-$)/g, "");
   const path = `products/${Date.now()}-${safeName}`;
-  const buffer = new Uint8Array(await file.arrayBuffer());
   const { error } = await supabase.storage.from(siteConfig.productImagesBucket).upload(path, buffer, {
     contentType: file.type || "image/png",
     upsert: false,
   });
 
   if (error) {
-    throw new Error(`No se pudo subir la imagen del producto: ${error.message}`);
+    console.error("[uploadImage] Storage error:", error.message);
+    throw new Error("No se pudo subir la imagen. Intenta de nuevo.");
   }
 
   const { data } = supabase.storage.from(siteConfig.productImagesBucket).getPublicUrl(path);
@@ -145,7 +164,10 @@ export async function createProduct(formData: FormData) {
   }
 
   const { error } = await supabase.from("products").insert(payload);
-  if (error) throw new Error(`No se pudo crear el producto: ${error.message}`);
+  if (error) {
+    console.error("[createProduct] Supabase error:", error.message);
+    throw new Error("No se pudo crear el producto. Revisa los datos e intenta de nuevo.");
+  }
 
   revalidatePath("/");
   revalidatePath("/catalogo");
@@ -172,7 +194,10 @@ export async function updateProduct(formData: FormData) {
   }
 
   const { error } = await supabase.from("products").update(payload).eq("id", id);
-  if (error) throw new Error(`No se pudo actualizar el producto: ${error.message}`);
+  if (error) {
+    console.error("[updateProduct] Supabase error:", error.message);
+    throw new Error("No se pudo actualizar el producto. Revisa los datos e intenta de nuevo.");
+  }
 
   revalidatePath("/");
   revalidatePath("/catalogo");
@@ -188,7 +213,10 @@ export async function deleteProduct(formData: FormData) {
   const supabase = await getAdminClient();
 
   const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) throw new Error(`No se pudo eliminar el producto: ${error.message}`);
+  if (error) {
+    console.error("[deleteProduct] Supabase error:", error.message);
+    throw new Error("No se pudo eliminar el producto. Intenta de nuevo.");
+  }
 
   revalidatePath("/");
   revalidatePath("/catalogo");
