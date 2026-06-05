@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "@/lib/db/supabase";
 import { corsErrorResponse, corsSuccessResponse, getCorsOrigin, handleOptionsRequest } from "@/lib/utils/cors";
+import { createRateLimit } from "@/lib/utils/rate-limit";
 import type { QuoteItem, QuoteRequestInsert } from "@/lib/types";
 
 function isQuoteItem(item: unknown): item is QuoteItem {
@@ -32,6 +33,19 @@ export async function POST(request: Request) {
 
   if (origin === null && request.headers.get("origin")) {
     return corsErrorResponse(request.headers.get("origin"));
+  }
+
+  const ratelimit = createRateLimit();
+  if (ratelimit) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { success } = await ratelimit.limit(ip);
+    if (!success) {
+      return corsSuccessResponse(
+        { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+        origin,
+        429,
+      );
+    }
   }
 
   const body = (await request.json().catch(() => null)) as Partial<QuoteRequestInsert> | null;
