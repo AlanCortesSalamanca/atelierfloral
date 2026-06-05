@@ -4,6 +4,7 @@ export const siteConfig = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   whatsappPhone: process.env.NEXT_PUBLIC_WHATSAPP_PHONE ?? "",
   productImagesBucket: process.env.NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET ?? "product-images",
+  allowedOrigins: (process.env.ALLOWED_ORIGINS ?? "http://localhost:3000").split(",").map((o) => o.trim()).filter(Boolean),
 };
 
 export function hasSupabaseConfig() {

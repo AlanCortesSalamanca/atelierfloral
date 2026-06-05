@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getSupabaseClient } from "@/lib/db/supabase";
+import { corsErrorResponse, corsSuccessResponse, getCorsOrigin, handleOptionsRequest } from "@/lib/utils/cors";
 import type { QuoteItem, QuoteRequestInsert } from "@/lib/types";
 
 function isQuoteItem(item: unknown): item is QuoteItem {
@@ -23,11 +23,21 @@ function sanitizeOptional(value: unknown, maxLength = 120) {
   return trimmed ? trimmed.slice(0, maxLength) : null;
 }
 
+export async function OPTIONS(request: Request) {
+  return handleOptionsRequest(request);
+}
+
 export async function POST(request: Request) {
+  const origin = getCorsOrigin(request);
+
+  if (origin === null && request.headers.get("origin")) {
+    return corsErrorResponse(request.headers.get("origin"));
+  }
+
   const body = (await request.json().catch(() => null)) as Partial<QuoteRequestInsert> | null;
 
   if (!body || !Array.isArray(body.items) || body.items.length === 0 || !body.items.every(isQuoteItem)) {
-    return NextResponse.json({ error: "Datos de cotización inválidos" }, { status: 400 });
+    return corsSuccessResponse({ error: "Datos de cotización inválidos" }, origin, 400);
   }
 
   const customerName = sanitizeOptional(body.customer_name, 100);
@@ -35,15 +45,15 @@ export async function POST(request: Request) {
   const phoneDigits = customerPhone?.replace(/\D/g, "") ?? "";
 
   if (!customerName || !customerPhone || phoneDigits.length < 10) {
-    return NextResponse.json({ error: "Datos del cliente inválidos" }, { status: 400 });
+    return corsSuccessResponse({ error: "Datos del cliente inválidos" }, origin, 400);
   }
 
   if (body.customer_email && typeof body.customer_email === "string" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.customer_email.trim())) {
-    return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+    return corsSuccessResponse({ error: "Email inválido" }, origin, 400);
   }
 
   if (body.event_date && typeof body.event_date === "string" && Number.isNaN(new Date(body.event_date).getTime())) {
-    return NextResponse.json({ error: "Fecha de evento inválida" }, { status: 400 });
+    return corsSuccessResponse({ error: "Fecha de evento inválida" }, origin, 400);
   }
 
   const items = body.items;
@@ -64,14 +74,14 @@ export async function POST(request: Request) {
 
   const supabase = getSupabaseClient();
   if (!supabase) {
-    return NextResponse.json({ error: "Servicio no disponible" }, { status: 503 });
+    return corsSuccessResponse({ error: "Servicio no disponible" }, origin, 503);
   }
 
   const { error } = await supabase.from("quote_requests").insert(payload);
   if (error) {
     console.error("[POST /api/quote] Supabase insert failed:", error.message);
-    return NextResponse.json({ error: "No se pudo crear la cotización" }, { status: 500 });
+    return corsSuccessResponse({ error: "No se pudo crear la cotización" }, origin, 500);
   }
 
-  return NextResponse.json({ ok: true });
+  return corsSuccessResponse({ ok: true }, origin);
 }
