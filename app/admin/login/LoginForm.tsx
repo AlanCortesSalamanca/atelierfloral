@@ -2,13 +2,15 @@
 
 import { useActionState } from "react";
 import { loginAdmin } from "@/app/admin/actions/auth";
+import { adminCsrfFieldName } from "@/lib/admin/csrf";
 
-export function LoginForm({ next = "/admin" }: { next?: string }) {
+export function LoginForm({ next = "/admin", csrfToken }: { next?: string; csrfToken: string }) {
   const [state, formAction, isPending] = useActionState(loginAdmin, { error: "" });
 
   return (
     <form action={formAction} className="mt-8 space-y-4">
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name={adminCsrfFieldName} value={csrfToken} />
       <label className="block text-sm font-semibold text-ink">
         Correo
         <input
@@ -37,7 +39,7 @@ export function LoginForm({ next = "/admin" }: { next?: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-full bg-ink px-6 py-3 font-semibold text-cream shadow-card transition hover:bg-coffee disabled:cursor-not-allowed disabled:opacity-60"
+        className="tap-motion button-lift focus-gold w-full rounded-full bg-ink px-6 py-3 font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft disabled:cursor-not-allowed disabled:animate-pulse disabled:hover:bg-ink disabled:hover:shadow-card"
       >
         {isPending ? "Entrando..." : "Entrar al administrador"}
       </button>

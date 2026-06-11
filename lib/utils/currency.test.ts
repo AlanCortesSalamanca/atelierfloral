@@ -25,4 +25,9 @@ describe("formatCurrency", () => {
   it("handles negative values", () => {
     expect(formatCurrency(-10)).toBe("-$10.00");
   });
+
+  it("falls back for non-finite values", () => {
+    expect(formatCurrency(Number.NaN)).toBe("$0.00");
+    expect(formatCurrency(Number.POSITIVE_INFINITY)).toBe("$0.00");
+  });
 });

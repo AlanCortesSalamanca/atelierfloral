@@ -1,13 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getAuthenticatedAdminClient } from "@/app/admin/actions/admin-client";
 import { deleteProduct } from "@/app/admin/actions/products";
-import { getSupabaseAdminClient } from "@/lib/db/supabase";
+import { adminCsrfFieldName } from "@/lib/admin/csrf";
+import { getAdminCsrfToken } from "@/lib/admin/csrf-server";
 import type { Product } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/currency";
 
 export default async function AdminProductsPage() {
-  const supabase = getSupabaseAdminClient();
-  const { data, error } = supabase ? await supabase.from("products").select("*").order("created_at", { ascending: false }) : { data: [], error: null };
+  const supabase = await getAuthenticatedAdminClient();
+  const csrfToken = await getAdminCsrfToken();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, slug, category, price, image, active")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    console.error("[AdminProductsPage] Supabase error:", error.message);
+  }
   const products = (data ?? []) as Product[];
 
   return (
@@ -16,9 +26,9 @@ export default async function AdminProductsPage() {
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-sage">Productos</p>
           <h1 className="mt-3 font-heading text-5xl text-ink">Catálogo admin</h1>
-          {error ? <p className="mt-4 rounded-2xl bg-blush/20 p-3 text-sm font-semibold text-ink">No se pudieron cargar los productos: {error.message}</p> : null}
+          {error ? <p className="mt-4 rounded-2xl bg-blush/20 p-3 text-sm font-semibold text-ink">No se pudieron cargar los productos. Intenta de nuevo.</p> : null}
         </div>
-        <Link href="/admin/productos/nuevo" className="rounded-full bg-ink px-6 py-3 text-center font-semibold text-cream shadow-card transition hover:bg-coffee">
+        <Link href="/admin/productos/nuevo" className="tap-motion button-lift focus-gold rounded-full bg-ink px-6 py-3 text-center font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft">
           Nuevo producto
         </Link>
       </div>
@@ -54,12 +64,13 @@ export default async function AdminProductsPage() {
                   <td className="px-5 py-4">{product.active ? "Activo" : "Inactivo"}</td>
                   <td className="px-5 py-4">
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/admin/productos/${product.id}`} className="rounded-full border border-gold/70 bg-cream px-4 py-2 font-semibold text-ink transition hover:bg-beige/70">
+                      <Link href={`/admin/productos/${product.id}`} className="tap-motion button-soft focus-gold rounded-full border border-gold/70 bg-cream px-4 py-2 font-semibold text-ink hover:bg-beige/70">
                         Editar
                       </Link>
                       <form action={deleteProduct}>
+                        <input type="hidden" name={adminCsrfFieldName} value={csrfToken} />
                         <input type="hidden" name="id" value={product.id} />
-                        <button type="submit" className="rounded-full border border-blush/70 bg-blush/15 px-4 py-2 font-semibold text-ink transition hover:bg-blush/25">
+                        <button type="submit" className="tap-motion button-danger focus-gold rounded-full border border-blush/70 bg-blush/15 px-4 py-2 font-semibold text-ink hover:bg-blush/35">
                           Eliminar
                         </button>
                       </form>

@@ -15,7 +15,8 @@ export function sanitizeOptional(value: unknown, maxLength = 120): string | null
 }
 
 export function sanitizePhone(value: string): string {
-  return value.replace(/\D/g, "").slice(0, 20);
+  const withoutExtension = value.replace(/(?:\s|,)*(?:ext|extension|extensión)\.?\s*\d+.*$/i, "");
+  return withoutExtension.replace(/\D/g, "").slice(0, 15);
 }
 
 export function sanitizeEmail(value: string): string {
@@ -36,6 +37,6 @@ export function sanitizeItemName(value: string): string {
 
 export function sanitizeProductText(value: string | null, maxLength = 2000): string | null {
   if (!value) return null;
-  const cleaned = stripHtml(value).trim().slice(0, maxLength);
+  const cleaned = stripHtml(value).trim().slice(0, maxLength).trim();
   return cleaned || null;
 }

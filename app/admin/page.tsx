@@ -1,17 +1,15 @@
 import Link from "next/link";
+import { getAuthenticatedAdminClient } from "@/app/admin/actions/admin-client";
 import { StatsCards } from "@/app/admin/components/StatsCards";
-import { getSupabaseAdminClient } from "@/lib/db/supabase";
 
 export default async function AdminDashboardPage() {
-  const supabase = getSupabaseAdminClient();
+  const supabase = await getAuthenticatedAdminClient();
 
-  const [quotes, newQuotes, activeProducts] = supabase
-    ? await Promise.all([
-        supabase.from("quote_requests").select("id", { count: "exact", head: true }),
-        supabase.from("quote_requests").select("id", { count: "exact", head: true }).eq("status", "new"),
-        supabase.from("products").select("id", { count: "exact", head: true }).eq("active", true),
-      ])
-    : [{ count: 0 }, { count: 0 }, { count: 0 }];
+  const [quotes, newQuotes, activeProducts] = await Promise.all([
+    supabase.from("quote_requests").select("id", { count: "estimated", head: true }),
+    supabase.from("quote_requests").select("id", { count: "estimated", head: true }).eq("status", "new"),
+    supabase.from("products").select("id", { count: "estimated", head: true }).eq("active", true),
+  ]);
 
   return (
     <div>
@@ -20,7 +18,7 @@ export default async function AdminDashboardPage() {
           <p className="text-sm font-bold uppercase tracking-[0.3em] text-sage">Panel</p>
           <h1 className="mt-3 font-heading text-5xl text-ink">Administrador</h1>
         </div>
-        <Link href="/admin/productos/nuevo" className="rounded-full bg-ink px-6 py-3 text-center font-semibold text-cream shadow-card transition hover:bg-coffee">
+        <Link href="/admin/productos/nuevo" className="tap-motion button-lift focus-gold rounded-full bg-ink px-6 py-3 text-center font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft">
           Nuevo producto
         </Link>
       </div>

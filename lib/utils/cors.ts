@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { siteConfig } from "@/lib/config";
 
 function isSameOrigin(request: Request, origin: string): boolean {
-  const host = request.headers.get("host");
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (!host) return false;
   const proto = request.headers.get("x-forwarded-proto") ?? "https";
   return origin === `${proto}://${host}` || origin === `http://${host}`;
@@ -20,12 +20,14 @@ export function getCorsOrigin(request: Request): string | null {
   return null;
 }
 
-export function corsErrorResponse(origin: string | null) {
+export function corsErrorResponse() {
   return NextResponse.json(
     { error: "Origen no autorizado" },
     {
       status: 403,
-      headers: origin ? { "Access-Control-Allow-Origin": origin } : undefined,
+      headers: {
+        "Cache-Control": "no-store",
+      },
     },
   );
 }
@@ -44,7 +46,7 @@ export function corsSuccessResponse(body: unknown, origin: string | null, status
 export function handleOptionsRequest(request: Request) {
   const origin = getCorsOrigin(request);
   if (!origin) {
-    return corsErrorResponse(request.headers.get("origin"));
+    return corsErrorResponse();
   }
 
   return new NextResponse(null, {

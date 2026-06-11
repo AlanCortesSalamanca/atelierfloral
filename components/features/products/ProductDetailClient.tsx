@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { ProductImage } from "@/components/features/products/ProductImage";
 import { useQuote } from "@/hooks/useQuote";
+import { dispatchQuoteFlyAnimation } from "@/components/features/quote/quoteFlyAnimation";
 import { buildWhatsAppMessage, productToQuoteItem } from "@/lib/services/quote.service";
-import { getWhatsAppUrl } from "@/lib/services/whatsapp.service";
+import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import type { Product } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/currency";
 
@@ -19,18 +20,18 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   return (
     <main className="container-page section-pad">
-      <Link href="/catalogo" className="mb-8 inline-block text-sm font-semibold text-coffee underline-offset-4 hover:underline">
+      <Link href="/catalogo" className="tap-motion focus-gold mb-8 inline-block rounded-full text-sm font-semibold text-coffee underline-offset-4 hover:text-ink hover:underline">
         Volver al catálogo
       </Link>
       <section className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-start">
         <div className="space-y-4">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] bg-beige shadow-soft">
+          <div data-product-detail-image className="relative aspect-[4/3] overflow-hidden rounded-[2.5rem] bg-beige shadow-soft">
             <ProductImage src={selectedImage} alt={product.name} />
           </div>
           {gallery.length > 1 ? (
             <div className="grid grid-cols-4 gap-3">
               {gallery.map((image) => (
-                <button key={image} type="button" onClick={() => setSelectedImage(image)} className="relative aspect-square overflow-hidden rounded-2xl border border-white/70 bg-beige shadow-card">
+                <button key={image} type="button" aria-label={`Ver imagen de ${product.name}`} onClick={() => setSelectedImage(image)} className="tap-motion button-soft focus-gold relative aspect-square overflow-hidden rounded-2xl border border-white/70 bg-beige shadow-card hover:border-gold/70 hover:shadow-soft">
                   <ProductImage src={image} alt={product.name} />
                 </button>
               ))}
@@ -53,21 +54,28 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <div className="mt-8 flex items-center gap-4">
             <span className="font-semibold text-ink">Cantidad</span>
             <div className="flex items-center overflow-hidden rounded-full border border-beige bg-cream">
-              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="px-4 py-2 text-lg font-semibold text-ink">
+              <button type="button" aria-label="Disminuir cantidad" onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="tap-motion button-quantity focus-gold px-4 py-2 text-lg font-semibold text-ink">
                 -
               </button>
               <span className="min-w-10 text-center font-semibold">{quantity}</span>
-              <button type="button" onClick={() => setQuantity((value) => value + 1)} className="px-4 py-2 text-lg font-semibold text-ink">
+              <button type="button" aria-label="Aumentar cantidad" onClick={() => setQuantity((value) => Math.min(999, value + 1))} className="tap-motion button-quantity focus-gold px-4 py-2 text-lg font-semibold text-ink">
                 +
               </button>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <button type="button" onClick={() => addProduct(product, quantity)} className="rounded-full bg-ink px-6 py-3 font-semibold text-cream shadow-card transition hover:bg-coffee">
+            <button
+              type="button"
+              onClick={(event) => {
+                addProduct(product, quantity);
+                dispatchQuoteFlyAnimation(product, event.currentTarget, selectedImage);
+              }}
+              className="tap-motion button-lift focus-gold rounded-full bg-ink px-6 py-3 font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft"
+            >
               Agregar a cotización
             </button>
-            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="rounded-full border border-gold/70 bg-cream px-6 py-3 text-center font-semibold text-ink transition hover:bg-beige/70">
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="tap-motion button-soft focus-gold rounded-full border border-gold/70 bg-cream px-6 py-3 text-center font-semibold text-ink hover:bg-beige/70">
               Cotizar por WhatsApp
             </a>
           </div>

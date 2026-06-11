@@ -8,13 +8,21 @@ function isQuoteItem(item: unknown): item is QuoteItem {
   if (!item || typeof item !== "object") return false;
   const value = item as Record<string, unknown>;
   return (
-    typeof value.productId === "string" &&
+    typeof value.productId === "number" &&
+    Number.isInteger(value.productId) &&
     typeof value.slug === "string" &&
+    value.slug.trim().length > 0 &&
     typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
     typeof value.category === "string" &&
+    value.category.trim().length > 0 &&
     typeof value.price === "number" &&
+    Number.isFinite(value.price) &&
+    value.price >= 0 &&
     typeof value.quantity === "number" &&
+    Number.isInteger(value.quantity) &&
     value.quantity > 0 &&
+    value.quantity <= 999 &&
     (typeof value.image === "string" || value.image === null)
   );
 }
@@ -27,26 +35,28 @@ export async function POST(request: Request) {
   const origin = getCorsOrigin(request);
 
   if (origin === null && request.headers.get("origin")) {
-    return corsErrorResponse(request.headers.get("origin"));
+    return corsErrorResponse();
   }
 
   const ratelimit = createRateLimit();
-  if (ratelimit) {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    const { success } = await ratelimit.limit(ip);
-    if (!success) {
-      return corsSuccessResponse(
-        { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
-        origin,
-        429,
-      );
-    }
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const { success } = await ratelimit.limit(ip);
+  if (!success) {
+    return corsSuccessResponse(
+      { error: "Demasiadas solicitudes. Intenta de nuevo en un minuto." },
+      origin,
+      429,
+    );
   }
 
   const body = (await request.json().catch(() => null)) as Partial<QuoteRequestInsert> | null;
 
   if (!body || !Array.isArray(body.items) || body.items.length === 0 || !body.items.every(isQuoteItem)) {
     return corsSuccessResponse({ error: "Datos de cotización inválidos" }, origin, 400);
+  }
+
+  if (body.privacy_accepted !== true) {
+    return corsSuccessResponse({ error: "Debes aceptar el aviso de privacidad" }, origin, 400);
   }
 
   const customerName = sanitizeOptional(body.customer_name, 100);
@@ -58,11 +68,9 @@ export async function POST(request: Request) {
   }
 
   const rawEmail = body.customer_email;
-  if (rawEmail && typeof rawEmail === "string") {
-    const cleaned = sanitizeEmail(rawEmail);
-    if (cleaned && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
-      return corsSuccessResponse({ error: "Email inválido" }, origin, 400);
-    }
+  const cleanedEmail = typeof rawEmail === "string" ? sanitizeEmail(rawEmail) : "";
+  if (cleanedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
+    return corsSuccessResponse({ error: "Email inválido" }, origin, 400);
   }
 
   if (body.event_date && typeof body.event_date === "string" && Number.isNaN(new Date(body.event_date).getTime())) {
@@ -73,7 +81,13 @@ export async function POST(request: Request) {
     ...item,
     name: sanitizeItemName(item.name),
     slug: sanitizeItemName(item.slug),
+    category: sanitizeItemName(item.category),
   }));
+
+  if (items.some((item) => !item.name || !item.slug || !item.category)) {
+    return corsSuccessResponse({ error: "Productos inválidos" }, origin, 400);
+  }
+
   const payload: QuoteRequestInsert = {
     customer_name: customerName,
     customer_phone: phoneDigits,
@@ -82,8 +96,9 @@ export async function POST(request: Request) {
     desired_total_pieces: items.reduce((total, item) => total + item.quantity, 0),
     estimated_subtotal: items.reduce((total, item) => total + item.price * item.quantity, 0),
     status: "new",
+    privacy_accepted: true,
     customer_instagram: sanitizeOptional(body.customer_instagram, 80),
-    customer_email: rawEmail && typeof rawEmail === "string" ? sanitizeEmail(rawEmail) : null,
+    customer_email: cleanedEmail || null,
     event_type: sanitizeOptional(body.event_type, 120),
     event_date: sanitizeOptional(body.event_date, 30),
     custom_notes: sanitizeOptional(body.custom_notes, 800),

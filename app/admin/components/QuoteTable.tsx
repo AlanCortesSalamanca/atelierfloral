@@ -1,8 +1,9 @@
 import { cancelQuote } from "@/app/admin/actions/quotes";
-import type { QuoteRequest } from "@/lib/types";
+import { adminCsrfFieldName } from "@/lib/admin/csrf";
+import type { QuoteRequestAdmin } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/currency";
 
-export function QuoteTable({ quotes }: { quotes: QuoteRequest[] }) {
+export function QuoteTable({ quotes, csrfToken }: { quotes: QuoteRequestAdmin[]; csrfToken: string }) {
   if (quotes.length === 0) {
     return <div className="rounded-[2rem] border border-beige bg-white/60 p-8 text-center text-coffee">No hay cotizaciones para mostrar.</div>;
   }
@@ -38,8 +39,9 @@ export function QuoteTable({ quotes }: { quotes: QuoteRequest[] }) {
                 <td className="px-5 py-4">
                   {quote.status !== "cancelled" ? (
                     <form action={cancelQuote}>
+                      <input type="hidden" name={adminCsrfFieldName} value={csrfToken} />
                       <input type="hidden" name="id" value={quote.id} />
-                      <button type="submit" className="rounded-full border border-blush/70 bg-blush/15 px-4 py-2 font-semibold text-ink transition hover:bg-blush/25">
+                      <button type="submit" aria-label={`Cancelar cotización de ${quote.customer_name}`} className="tap-motion button-danger focus-gold rounded-full border border-blush/70 bg-blush/15 px-4 py-2 font-semibold text-ink hover:bg-blush/35">
                         Cancelar
                       </button>
                     </form>

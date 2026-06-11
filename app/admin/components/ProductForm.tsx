@@ -1,4 +1,5 @@
 import { createProduct, updateProduct } from "@/app/admin/actions/products";
+import { adminCsrfFieldName } from "@/lib/admin/csrf";
 import { productCategories } from "@/lib/constants/categories";
 import type { Product } from "@/lib/types";
 
@@ -7,15 +8,13 @@ function materialsValue(product?: Product | null) {
   return Array.isArray(product.materials) ? product.materials.join("\n") : product.materials;
 }
 
-export function ProductForm({ product }: { product?: Product | null }) {
+export function ProductForm({ product, csrfToken }: { product?: Product | null; csrfToken: string }) {
   const action = product ? updateProduct : createProduct;
-  const galleryImages = product?.gallery_images?.join("\n") ?? "";
 
   return (
     <form action={action} className="rounded-[2rem] border border-white/70 bg-white/65 p-5 shadow-card sm:p-7">
+      <input type="hidden" name={adminCsrfFieldName} value={csrfToken} />
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
-      <input type="hidden" name="existing_image" value={product?.image ?? ""} />
-      <input type="hidden" name="existing_gallery_images" value={galleryImages} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nombre" name="name" defaultValue={product?.name ?? ""} required />
@@ -65,7 +64,7 @@ export function ProductForm({ product }: { product?: Product | null }) {
         <Check name="active" label="Activo" defaultChecked={product ? Boolean(product.active) : true} />
       </div>
 
-      <button type="submit" className="mt-7 rounded-full bg-ink px-7 py-3 font-semibold text-cream shadow-card transition hover:bg-coffee">
+      <button type="submit" className="tap-motion button-lift focus-gold mt-7 rounded-full bg-ink px-7 py-3 font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft">
         {product ? "Guardar cambios" : "Crear producto"}
       </button>
     </form>
