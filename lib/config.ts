@@ -1,4 +1,5 @@
 const rawAllowedOrigins = process.env.ALLOWED_ORIGINS;
+const defaultSiteUrl = "https://atelierfloralpaos-tau.vercel.app";
 
 function isValidHttpUrl(value: string) {
   try {
@@ -10,7 +11,7 @@ function isValidHttpUrl(value: string) {
 }
 
 export const siteConfig = {
-  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://atelierfloral.mx").replace(/\/$/, ""),
+  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL?.trim() || defaultSiteUrl).replace(/\/$/, ""),
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",

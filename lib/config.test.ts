@@ -28,6 +28,14 @@ describe("site config", () => {
     expect(siteConfig.allowedOrigins).toEqual(["http://localhost:3000"]);
   });
 
+  it("uses the verified Vercel URL as the default site URL", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
+
+    const { siteConfig } = await loadConfig();
+
+    expect(siteConfig.siteUrl).toBe("https://atelierfloralpaos-tau.vercel.app");
+  });
+
   it("detects Supabase public and admin config", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://supabase.test");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
