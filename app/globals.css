@@ -11,8 +11,10 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -28,6 +30,53 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+@layer components {
+  .tap-motion {
+    transition-property: color, background-color, border-color, text-decoration-color, box-shadow, transform;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .button-lift:not(:disabled):hover,
+  .button-soft:not(:disabled):hover,
+  .button-danger:not(:disabled):hover {
+    transform: translateY(-0.125rem) scale(1.02);
+  }
+
+  .button-quantity:not(:disabled):hover {
+    transform: scale(1.06);
+  }
+
+  .tap-motion:not(:disabled):active {
+    transform: scale(0.97);
+  }
+
+  .focus-gold:focus-visible {
+    outline: 2px solid rgba(195, 160, 89, 0.68);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    .tap-motion,
+    .tap-motion:not(:disabled):active,
+    .button-lift:not(:disabled):hover,
+    .button-soft:not(:disabled):hover,
+    .button-danger:not(:disabled):hover,
+    .button-quantity:not(:disabled):hover {
+      transform: none;
+    }
+  }
 }
 
 .container-page {

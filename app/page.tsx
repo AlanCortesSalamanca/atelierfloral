@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/features/catalog/ProductCard";
 import { homeCategories } from "@/lib/constants/categories";
 import { getFeaturedProducts } from "@/lib/db/products";
 import { buildWhatsAppMessage } from "@/lib/services/quote.service";
-import { getWhatsAppUrl } from "@/lib/services/whatsapp.service";
+import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 
 export default async function HomePage() {
   const featuredProducts = await getFeaturedProducts();
@@ -22,10 +22,10 @@ export default async function HomePage() {
             Creamos piezas cálidas, femeninas y personalizadas para eventos, regalos y momentos especiales. Elige tus productos y solicita una cotización directa por WhatsApp.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link href="/catalogo" className="rounded-full bg-ink px-7 py-3 text-center font-semibold text-cream shadow-card transition hover:bg-coffee">
+            <Link href="/catalogo" className="tap-motion button-lift focus-gold rounded-full bg-ink px-7 py-3 text-center font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft">
               Ver catálogo
             </Link>
-            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="rounded-full border border-gold/70 bg-white/60 px-7 py-3 text-center font-semibold text-ink transition hover:bg-beige/70">
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="tap-motion button-soft focus-gold rounded-full border border-gold/70 bg-white/60 px-7 py-3 text-center font-semibold text-ink hover:bg-beige/70">
               Cotizar por WhatsApp
             </a>
           </div>
@@ -47,7 +47,7 @@ export default async function HomePage() {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {homeCategories.map((category) => (
-            <Link key={category.name} href={`/catalogo?categoria=${encodeURIComponent(category.name)}`} className="group overflow-hidden rounded-[1.75rem] bg-white/70 shadow-card transition hover:-translate-y-1 hover:shadow-soft">
+            <Link key={category.name} href={`/catalogo?categoria=${encodeURIComponent(category.name)}`} className="tap-motion button-soft focus-gold group overflow-hidden rounded-[1.75rem] bg-white/70 shadow-card hover:shadow-soft">
               <div className="relative h-44 image-soft">
                 <Image src={category.image} alt={category.name} fill sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/45 to-transparent" />
@@ -66,7 +66,7 @@ export default async function HomePage() {
               <p className="text-sm font-bold uppercase tracking-[0.28em] text-sage">Destacados</p>
               <h2 className="mt-3 font-heading text-4xl text-ink">Favoritos del atelier</h2>
             </div>
-            <Link href="/catalogo" className="font-semibold text-coffee underline-offset-4 hover:underline">
+            <Link href="/catalogo" className="tap-motion focus-gold inline-block font-semibold text-coffee underline-offset-4 hover:text-ink hover:underline">
               Ver todo el catálogo
             </Link>
           </div>

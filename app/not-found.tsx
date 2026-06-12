@@ -10,10 +10,10 @@ export default function NotFound() {
           La página que buscas pudo cambiar de lugar o el producto ya no está activo. Puedes volver al catálogo para elegir otra pieza artesanal.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/catalogo" className="rounded-full bg-ink px-7 py-3 font-semibold text-cream shadow-card transition hover:bg-coffee">
+          <Link href="/catalogo" className="tap-motion button-lift focus-gold rounded-full bg-ink px-7 py-3 font-semibold text-cream shadow-card hover:bg-coffee hover:shadow-soft">
             Ver catálogo
           </Link>
-          <Link href="/" className="rounded-full border border-gold/70 bg-cream px-7 py-3 font-semibold text-ink transition hover:bg-beige/70">
+          <Link href="/" className="tap-motion button-soft focus-gold rounded-full border border-gold/70 bg-cream px-7 py-3 font-semibold text-ink hover:bg-beige/70">
             Ir al inicio
           </Link>
         </div>

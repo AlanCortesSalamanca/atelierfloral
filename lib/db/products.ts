@@ -1,13 +1,15 @@
 import { getSupabaseClient } from "@/lib/db/supabase";
 import type { Product } from "@/lib/types";
 
+const productColumns = "id, name, category, price, description, stock, featured, image, gallery_images, materials, fragrance, dimensions, handcrafted_details, created_at, slug, active";
+
 export async function getActiveProducts() {
   const supabase = getSupabaseClient();
   if (!supabase) return [] as Product[];
 
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(productColumns)
     .eq("active", true)
     .order("created_at", { ascending: false });
 
@@ -25,7 +27,7 @@ export async function getFeaturedProducts() {
 
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(productColumns)
     .eq("active", true)
     .eq("featured", true)
     .order("created_at", { ascending: false })
@@ -43,7 +45,7 @@ export async function getProductBySlug(slug: string) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
 
-  const { data, error } = await supabase.from("products").select("*").eq("active", true).eq("slug", slug).single();
+  const { data, error } = await supabase.from("products").select(productColumns).eq("active", true).eq("slug", slug).single();
 
   if (error) {
     console.error("Error loading product", error.message);

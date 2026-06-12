@@ -4,7 +4,7 @@ import { formatCurrency } from "@/lib/utils/currency";
 
 export function productToQuoteItem(product: Product, quantity = 1): QuoteItem {
   return {
-    productId: String(product.id),
+    productId: product.id,
     slug: sanitizeItemName(product.slug),
     name: sanitizeItemName(product.name),
     category: sanitizeItemName(product.category),

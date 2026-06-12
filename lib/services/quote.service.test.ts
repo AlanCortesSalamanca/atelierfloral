@@ -22,7 +22,7 @@ const mockProduct: Product = {
 };
 
 const mockItem = {
-  productId: "1",
+  productId: 1,
   slug: "vela-aromatica",
   name: "Vela Aromática",
   category: "Velas",
@@ -34,7 +34,7 @@ const mockItem = {
 describe("productToQuoteItem", () => {
   it("converts a product with default quantity", () => {
     const item = productToQuoteItem(mockProduct);
-    expect(item.productId).toBe("1");
+    expect(item.productId).toBe(1);
     expect(item.name).toBe("Vela Aromática");
     expect(item.quantity).toBe(1);
     expect(item.price).toBe(150);
@@ -50,9 +50,9 @@ describe("productToQuoteItem", () => {
     expect(item.price).toBe(0);
   });
 
-  it("converts numeric id to string", () => {
+  it("keeps numeric id", () => {
     const item = productToQuoteItem(mockProduct);
-    expect(typeof item.productId).toBe("string");
+    expect(typeof item.productId).toBe("number");
   });
 });
 

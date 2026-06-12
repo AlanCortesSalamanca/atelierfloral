@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/features/catalog/ProductCard";
 import { productCategories } from "@/lib/constants/categories";
@@ -12,26 +12,23 @@ export function CatalogClient({ products, initialCategory = "Todos" }: { product
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedCategory, setSelectedCategory] = useState(normalizedInitialCategory);
+  const categoryParam = searchParams.get("categoria") ?? normalizedInitialCategory;
+  const selectedCategory = categories.includes(categoryParam as (typeof categories)[number]) ? categoryParam : "Todos";
   const filteredProducts = useMemo(
     () => (selectedCategory === "Todos" ? products : products.filter((product) => product.category.toLowerCase() === selectedCategory.toLowerCase())),
     [products, selectedCategory],
   );
 
   function selectCategory(category: string) {
-    setSelectedCategory(category);
-    const searchParams = new URLSearchParams();
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
     if (category !== "Todos") {
-      searchParams.set("categoria", category);
+      nextSearchParams.set("categoria", category);
+    } else {
+      nextSearchParams.delete("categoria");
     }
-    const query = searchParams.toString();
+    const query = nextSearchParams.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
-
-  useEffect(() => {
-    const category = searchParams.get("categoria") ?? "Todos";
-    setSelectedCategory(categories.includes(category as (typeof categories)[number]) ? category : "Todos");
-  }, [categories, searchParams]);
 
   return (
     <section className="container-page section-pad">
@@ -42,8 +39,8 @@ export function CatalogClient({ products, initialCategory = "Todos" }: { product
             type="button"
             onClick={() => selectCategory(category)}
             aria-pressed={selectedCategory === category}
-            className={`whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold transition ${
-              selectedCategory === category ? "bg-ink text-cream shadow-card" : "border border-beige bg-white/60 text-coffee hover:bg-beige/60"
+            className={`tap-motion button-soft focus-gold whitespace-nowrap rounded-full px-5 py-2 text-sm font-semibold ${
+              selectedCategory === category ? "bg-ink text-cream shadow-card hover:shadow-soft" : "border border-beige bg-white/60 text-coffee hover:bg-beige/60"
             }`}
           >
             {category}

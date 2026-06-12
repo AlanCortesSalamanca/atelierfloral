@@ -1,4 +1,4 @@
-export type ProductCategory = "Velas" | "Suculentas" | "Recuerdos" | "Kits" | "Personalizados" | string;
+export type ProductCategory = "Velas" | "Suculentas" | "Recuerdos" | "Kits" | "Personalizados";
 
 export type Product = {
   id: number;
