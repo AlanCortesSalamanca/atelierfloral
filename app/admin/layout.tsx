@@ -3,11 +3,17 @@ import { SessionMonitor } from "@/app/admin/components/SessionMonitor";
 import { isAllowedAdminUser } from "@/lib/admin/access";
 import { getAdminCsrfToken } from "@/lib/admin/csrf-server";
 import { getSupabaseServerClient } from "@/lib/db/supabase-server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const requestHeaders = await headers();
+  if (requestHeaders.get("x-admin-pathname") === "/admin/login") {
+    return children;
+  }
+
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },

@@ -30,12 +30,18 @@ function ensureAdminCsrfCookie(request: NextRequest, response: NextResponse) {
   return response;
 }
 
+function nextAdminResponse(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-admin-pathname", request.nextUrl.pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function middleware(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
   const isLoginRoute = request.nextUrl.pathname === "/admin/login";
 
   if (!isAdminRoute || isLoginRoute) {
-    return isAdminRoute ? ensureAdminCsrfCookie(request, NextResponse.next()) : NextResponse.next();
+    return isAdminRoute ? ensureAdminCsrfCookie(request, nextAdminResponse(request)) : NextResponse.next();
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -45,7 +51,7 @@ export async function middleware(request: NextRequest) {
     return ensureAdminCsrfCookie(request, NextResponse.redirect(new URL("/admin/login", request.url)));
   }
 
-  let response = NextResponse.next({ request });
+  let response = nextAdminResponse(request);
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
@@ -53,7 +59,7 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = nextAdminResponse(request);
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
