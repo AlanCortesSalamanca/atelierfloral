@@ -1,5 +1,14 @@
 const rawAllowedOrigins = process.env.ALLOWED_ORIGINS;
 
+function isValidHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export const siteConfig = {
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://atelierfloral.mx").replace(/\/$/, ""),
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -11,9 +20,9 @@ export const siteConfig = {
 };
 
 export function hasSupabaseConfig() {
-  return Boolean(siteConfig.supabaseUrl && siteConfig.supabaseAnonKey);
+  return Boolean(siteConfig.supabaseAnonKey && isValidHttpUrl(siteConfig.supabaseUrl));
 }
 
 export function hasSupabaseAdminConfig() {
-  return Boolean(siteConfig.supabaseUrl && siteConfig.supabaseServiceRoleKey);
+  return Boolean(siteConfig.supabaseServiceRoleKey && isValidHttpUrl(siteConfig.supabaseUrl));
 }

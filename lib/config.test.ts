@@ -38,4 +38,15 @@ describe("site config", () => {
     expect(hasSupabaseConfig()).toBe(true);
     expect(hasSupabaseAdminConfig()).toBe(true);
   });
+
+  it("rejects malformed Supabase URLs", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "supabase.test");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service");
+
+    const { hasSupabaseAdminConfig, hasSupabaseConfig } = await loadConfig();
+
+    expect(hasSupabaseConfig()).toBe(false);
+    expect(hasSupabaseAdminConfig()).toBe(false);
+  });
 });

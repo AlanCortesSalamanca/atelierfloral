@@ -5,6 +5,8 @@ import { getAdminCsrfToken } from "@/lib/admin/csrf-server";
 import { getSupabaseServerClient } from "@/lib/db/supabase-server";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await getSupabaseServerClient();
   const {
