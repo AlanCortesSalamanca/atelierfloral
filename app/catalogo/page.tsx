@@ -1,5 +1,21 @@
+import type { Metadata } from "next";
 import { CatalogClient } from "@/components/features/catalog/CatalogClient";
 import { getActiveProducts } from "@/lib/db/products";
+
+export const metadata: Metadata = {
+  title: "Catálogo de velas, suculentas y recuerdos personalizados",
+  description: "Explora velas artesanales, suculentas, plantas de regalo, flores de vela, recuerdos para eventos y kits personalizados de Atelier Floral.",
+  keywords: ["velas artesanales", "suculentas", "plantas de regalo", "flores de vela", "recuerdos personalizados", "detalles para eventos"],
+  alternates: {
+    canonical: "/catalogo",
+  },
+  openGraph: {
+    title: "Catálogo de velas, suculentas y recuerdos personalizados",
+    description: "Velas artesanales, suculentas, plantas de regalo, flores de vela y recuerdos personalizados para eventos.",
+    url: "/catalogo",
+    type: "website",
+  },
+};
 
 export default async function CatalogPage({ searchParams }: { searchParams: Promise<{ categoria?: string }> }) {
   const { categoria } = await searchParams;
