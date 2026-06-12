@@ -9,6 +9,7 @@ type FlyItem = QuoteFlyAnimationDetail & {
 };
 
 const maxFlySize = 92;
+const flyAnimationDurationMs = 1100;
 
 function getFlySize(rect: DOMRectReadOnly) {
   return Math.max(48, Math.min(maxFlySize, Math.min(rect.width, rect.height)));
@@ -49,7 +50,7 @@ export function QuoteFlyToCart() {
 
       const cleanupTimeout = window.setTimeout(() => {
         setItems((current) => current.filter((currentItem) => currentItem.id !== item.id));
-      }, 760);
+      }, flyAnimationDurationMs + 120);
       timeouts.push(cleanupTimeout);
     }
 
@@ -76,11 +77,12 @@ export function QuoteFlyToCart() {
         return (
           <div
             key={item.id}
-            className={`absolute rounded-2xl border border-white/80 bg-beige bg-cover bg-center shadow-soft transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${item.image ? "" : "image-soft"}`}
+            className={`absolute rounded-2xl border border-white/80 bg-beige bg-cover bg-center shadow-soft transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${item.image ? "" : "image-soft"}`}
             style={{
               backgroundImage: cssImageUrl(item.image),
               height: item.started ? endSize : size,
               opacity: item.started ? 0.18 : 1,
+              transitionDuration: `${flyAnimationDurationMs}ms`,
               transform: `translate3d(${item.started ? endX : startX}px, ${item.started ? endY : startY}px, 0) rotate(${item.started ? 8 : 0}deg)`,
               width: item.started ? endSize : size,
             }}
