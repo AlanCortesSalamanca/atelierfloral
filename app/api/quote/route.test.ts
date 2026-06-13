@@ -57,7 +57,7 @@ describe("POST /api/quote", () => {
     const from = vi.fn().mockReturnValue({ insert });
     mocks.getSupabaseClient.mockReturnValue({ from });
 
-    const response = await POST(jsonRequest(validPayload));
+    const response = await POST(jsonRequest({ ...validPayload, event_date: "2025-12-01" }));
 
     expect(response.status).toBe(200);
     expect(from).toHaveBeenCalledWith("quote_requests");
@@ -69,6 +69,7 @@ describe("POST /api/quote", () => {
         desired_total_pieces: 2,
         estimated_subtotal: 300,
         status: "new",
+        event_date: "2025-12-01",
         privacy_accepted: true,
       }),
     );
@@ -88,6 +89,20 @@ describe("POST /api/quote", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "Email inválido" });
+  });
+
+  it("rejects invalid event dates", async () => {
+    const response = await POST(jsonRequest({ ...validPayload, event_date: "2025-02-31" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Fecha de evento inválida" });
+  });
+
+  it("rejects event dates with extra characters", async () => {
+    const response = await POST(jsonRequest({ ...validPayload, event_date: "2025-12-01 extra" }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Fecha de evento inválida" });
   });
 
   it("requires privacy notice acceptance", async () => {

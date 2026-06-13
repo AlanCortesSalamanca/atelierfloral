@@ -1,285 +1,286 @@
-# Atelier Floral Web - Contexto del Proyecto
+# Atelier Floral Web - Contexto Del Proyecto
 
 ## Resumen
 
-Aplicacion web tipo ecommerce sin pagos integrados ni cuentas de cliente, orientada a un negocio pequeno de velas artesanales, suculentas, recuerdos, kits y productos personalizados.
+Aplicacion web tipo catalogo/cotizacion para Atelier Floral, negocio de velas artesanales, suculentas, recuerdos, kits y productos personalizados.
 
-El flujo comercial principal es por cotizacion: el cliente agrega productos a una cotizacion local, completa sus datos, se guarda una solicitud en Supabase y se abre WhatsApp con un mensaje generado automaticamente.
+No hay pagos en linea ni cuentas de cliente. El flujo comercial principal es: cliente agrega productos a una cotizacion local, completa datos, acepta el aviso de privacidad, la solicitud se guarda en Supabase y luego se abre WhatsApp con un mensaje generado automaticamente.
 
-Existe un panel administrativo privado en `/admin`, protegido con Supabase Auth y una lista de administradores permitidos. No se crean usuarios ni sesiones para clientes finales.
+Existe un panel administrativo privado en `/admin`, protegido con Supabase Auth, allowlist de administradores, CSRF, validacion same-origin, middleware y cliente service-role solo del lado servidor.
 
 ## Stack
 
 - Next.js 15 App Router.
 - React 19.
-- TypeScript en modo estricto.
+- TypeScript estricto.
 - Tailwind CSS 3.
 - Supabase Auth, Database y Storage.
 - `@supabase/supabase-js` y `@supabase/ssr`.
 - Upstash Redis + `@upstash/ratelimit` para rate limiting.
 - Vitest + Testing Library + jsdom.
-- Vercel como destino de despliegue.
+- Vercel para despliegue.
 
-## Reglas funcionales
+## Reglas Funcionales
 
-- No agregar login para clientes.
-- No agregar cuentas de usuario para clientes.
-- No agregar Stripe ni pagos dentro del sitio.
-- No cambiar la base de datos sin instruccion explicita.
+- No agregar login, cuentas ni sesiones para clientes finales.
+- No agregar Stripe, checkout tradicional ni pagos dentro del sitio salvo instruccion explicita.
 - La compra/cotizacion final ocurre por WhatsApp.
-- El login existente es solo para administradores del sitio en `/admin`.
-- `SUPABASE_SERVICE_ROLE_KEY` solo puede usarse en servidor. Nunca exponerla con prefijo `NEXT_PUBLIC_`.
+- El login existente es solo para administradores en `/admin`.
+- `SUPABASE_SERVICE_ROLE_KEY` solo puede usarse en servidor. Nunca exponerla con `NEXT_PUBLIC_`.
+- No cambiar la base de datos sin migracion SQL revisable.
 
-## Variables de entorno
+## URLs Y SEO Actual
+
+- Dominio publico verificado en Google Search Console por URL prefix: `https://atelierfloralpaos-tau.vercel.app/`.
+- Archivo de verificacion Google: `public/googled87c79dc7ba4c5c4.html`.
+- Sitemap publico: `https://atelierfloralpaos-tau.vercel.app/sitemap.xml`.
+- `NEXT_PUBLIC_SITE_URL` debe coincidir con la propiedad verificada. Si no esta configurada, `lib/config.ts` usa fallback `https://atelierfloralpaos-tau.vercel.app`.
+- Si se conecta dominio propio en el futuro, cambiar `NEXT_PUBLIC_SITE_URL`, `ALLOWED_ORIGINS`, verificar el dominio en Search Console y reenviar sitemap.
+
+SEO implementado:
+
+- Metadata base en `app/layout.tsx`.
+- Open Graph y Twitter Cards.
+- JSON-LD `LocalBusiness` y `WebSite`.
+- Metadata especifica en `/catalogo`.
+- Metadata dinamica y JSON-LD `Product` en `/productos/[slug]`.
+- `app/sitemap.ts` incluye rutas publicas y productos activos desde Supabase.
+- `app/robots.ts` permite el sitio y bloquea `/api/` y `/admin/`.
+
+## Variables De Entorno
 
 Archivo de ejemplo: `.env.local.example`.
 
 Variables esperadas:
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://tu-dominio-produccion.com
+NEXT_PUBLIC_SITE_URL=https://atelierfloralpaos-tau.vercel.app
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
 NEXT_PUBLIC_WHATSAPP_PHONE=5210000000000
 NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET=product-images
-ALLOWED_ORIGINS=http://localhost:3000,https://tu-dominio-produccion.com
+ALLOWED_ORIGINS=http://localhost:3000,https://atelierfloralpaos-tau.vercel.app
 UPSTASH_REDIS_REST_URL=https://tu-upstash-redis.upstash.io
 UPSTASH_REDIS_REST_TOKEN=tu-upstash-token
+CRON_SECRET=un-secreto-largo-para-cron
 ADMIN_EMAILS=admin@tu-dominio-produccion.com
 ADMIN_USER_IDS=
+PRIVACY_EMAIL=privacidad@tu-dominio-produccion.com
 ```
 
 Notas:
 
-- `.env.local.example` debe mantenerse versionado para onboarding.
 - `.env.local` debe permanecer ignorado por git.
-- `SUPABASE_SERVICE_ROLE_KEY` es requerida para CRUD admin, Storage y auditoria.
-- `NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET` usa `product-images` por defecto.
-- `ALLOWED_ORIGINS` controla CORS publico y validacion same-origin de acciones admin.
-- `ADMIN_EMAILS` y/o `ADMIN_USER_IDS` definen quienes pueden entrar al admin.
-- En produccion, si no hay allowlist admin, nadie queda autorizado.
-- En desarrollo, si no hay allowlist admin, cualquier usuario Supabase autenticado se considera permitido para facilitar pruebas locales.
+- `.env.local.example` debe mantenerse versionado para onboarding.
+- En produccion, `ADMIN_EMAILS` o `ADMIN_USER_IDS` debe incluir al administrador. Si ambos estan vacios, nadie queda autorizado.
+- Usuario admin confirmado del proyecto actual: `alan.cortes.salamancalia@gmail.com` con UID `00d949b3-9f65-444e-93db-67d2c1752758`.
+- `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN` deben ser correctos en Vercel. En local, si tienen valores invalidos, Upstash lanza `WRONGPASS`.
+- Para desarrollo local, se pueden omitir/comentar variables Upstash y se usa fallback en memoria.
+- `CRON_SECRET` protege `/api/cron/anonymize`.
+- `PRIVACY_EMAIL` alimenta el aviso de privacidad y contacto ARCO.
 
-## Configuracion centralizada
+## Configuracion Centralizada
 
 Archivo principal: `lib/config.ts`.
 
-- `siteConfig.siteUrl`: usa `NEXT_PUBLIC_SITE_URL` o fallback `https://atelierfloral.mx`.
+- `siteConfig.siteUrl`: `NEXT_PUBLIC_SITE_URL` sin slash final o fallback `https://atelierfloralpaos-tau.vercel.app`.
 - `siteConfig.supabaseUrl`: `NEXT_PUBLIC_SUPABASE_URL`.
 - `siteConfig.supabaseAnonKey`: `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - `siteConfig.supabaseServiceRoleKey`: `SUPABASE_SERVICE_ROLE_KEY`.
 - `siteConfig.whatsappPhone`: `NEXT_PUBLIC_WHATSAPP_PHONE`.
 - `siteConfig.productImagesBucket`: `NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET` o `product-images`.
 - `siteConfig.allowedOrigins`: `ALLOWED_ORIGINS` o `http://localhost:3000`.
-- `hasSupabaseConfig()`: valida URL + anon key.
-- `hasSupabaseAdminConfig()`: valida URL + service role key.
+- `hasSupabaseConfig()`: valida anon key y URL Supabase http/https.
+- `hasSupabaseAdminConfig()`: valida service role key y URL Supabase http/https.
 
 Tests relacionados: `lib/config.test.ts`.
 
-## MCP Supabase
-
-Configurado en `opencode.json`:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "mcp": {
-    "supabase": {
-      "type": "remote",
-      "url": "https://mcp.supabase.com/mcp?project_ref=bkiumgzykkscycxbpgsp",
-      "enabled": true
-    }
-  }
-}
-```
-
-Despues de modificar `opencode.json`, reiniciar OpenCode para que cargue el MCP.
-
 ## Supabase Database
 
-Migracion principal: `supabase/migrations/20260610120000_initial_schema_hardening.sql`.
+Migraciones relevantes:
 
-La migracion captura y endurece esquema, constraints, indices, triggers `updated_at`, politicas RLS, politicas Storage y la funcion `anonymize_old_quote_requests()`.
+- `supabase/migrations/20260610120000_initial_schema_hardening.sql`.
+- `supabase/migrations/20260611213000_security_hardening.sql`.
+- `supabase/migrations/20260611223000_privacy_compliance.sql`.
+- `supabase/migrations/20260613120000_database_api_optimizations.sql`.
+
+Optimizaciones DB/API actuales:
+
+- `lib/db/products.ts` usa `React.cache()` para deduplicar consultas publicas dentro del mismo request/render.
+- Las columnas seleccionadas para productos viven en `lib/db/product-columns.ts`.
+- Catalogo y destacados usan `PRODUCT_SUMMARY_COLUMNS` para evitar cargar campos pesados como galeria, materiales, fragancia, dimensiones y detalles artesanales.
+- Detalle de producto usa `PRODUCT_DETAIL_COLUMNS` y `maybeSingle()` para tratar producto inexistente como caso esperado.
+- Admin edit usa `PRODUCT_ADMIN_COLUMNS`.
+- `getActiveProducts()` filtra productos activos, ordena por `created_at desc` y limita a 100 filas.
+- `products.category` tiene indice dedicado `products_category_idx` para filtros server-side futuros.
+- Las imagenes de producto siguen viniendo de Supabase Storage; por el volumen esperado actual no se optimizo aun el cuello de botella de multiples requests de imagen.
 
 ### `products`
 
-Columnas:
+Columnas usadas por la app:
 
 - `id bigint identity`.
 - `name text not null`.
-- `slug text not null`, con indice unico `products_slug_key`.
-- `category text not null` con CHECK: `Velas`, `Suculentas`, `Recuerdos`, `Kits`, `Personalizados`.
-- `price numeric(10,2)` con CHECK `price >= 0` cuando no es null.
+- `slug text not null`, unico.
+- `category text not null`: `Velas`, `Suculentas`, `Recuerdos`, `Kits`, `Personalizados`.
+- `price numeric(10,2)`.
 - `description text`.
-- `stock integer` con CHECK `stock >= 0` cuando no es null.
-- `featured boolean not null default false`.
+- `stock integer`.
+- `featured boolean`.
 - `image text`.
 - `gallery_images text[]`.
 - `materials text[]`.
 - `fragrance text`.
 - `dimensions text`.
 - `handcrafted_details text`.
-- `created_at timestamptz default now()`.
-- `updated_at timestamptz default now()`.
-- `active boolean not null default true`.
+- `created_at timestamptz`.
+- `active boolean`.
+
+Nota: el admin edit ya no selecciona `updated_at` porque en produccion esa columna no estaba aplicada y causaba 404/notFound al editar productos.
 
 Uso publico:
 
-- Home muestra productos con `active = true` y `featured = true`.
-- `/catalogo` muestra productos con `active = true`.
-- `/productos/[slug]` busca por `slug` y exige `active = true`.
+- Home muestra `active = true` y `featured = true`.
+- `/catalogo` muestra productos activos.
+- `/productos/[slug]` busca por slug y exige producto activo.
 - RLS permite `SELECT` anonimo solo de productos activos.
 
 Uso admin:
 
-- `/admin/productos` lista productos activos e inactivos.
+- `/admin/productos` lista activos e inactivos.
 - `/admin/productos/nuevo` crea productos.
-- `/admin/productos/[id]` edita productos.
-- Eliminar producto ejecuta `delete()` sobre `products`.
+- `/admin/productos/[id]` edita productos por id.
 - Crear/editar permite subir imagen principal y galeria a Supabase Storage.
-- Service role tiene acceso completo.
+- Eliminar producto limpia imagenes de Storage y elimina fila.
+- Operaciones admin usan service role server-side.
 
 ### `quote_requests`
 
-Columnas:
+Columnas principales:
 
 - `id bigint identity`.
 - `customer_name text not null`.
-- `customer_phone text not null`, con CHECK de 10 a 15 digitos.
+- `customer_phone text not null`, 10 a 15 digitos.
 - `items jsonb not null`, arreglo no vacio.
 - `unique_products integer not null default 0`.
 - `desired_total_pieces integer not null default 0`.
 - `estimated_subtotal numeric(10,2) not null default 0`.
-- `status text not null default 'new'`, con CHECK `new | cancelled`.
+- `status text not null default 'new'`.
+- `privacy_accepted boolean`, debe ser `true` para nuevas solicitudes.
 - `customer_instagram text`.
 - `customer_email text`.
 - `event_type text`.
-- `event_date text`.
+- `event_date date`, representado como string `YYYY-MM-DD` sobre la API JSON de Supabase.
 - `custom_notes text`.
-- `created_at timestamptz default now()`.
-- `updated_at timestamptz default now()`.
+- `created_at timestamptz`.
+- `updated_at timestamptz`.
 - `anonymized_at timestamptz`.
 
 Uso publico:
 
 - `/api/quote` inserta una fila al enviar `/cotizacion`.
-- `items` contiene productos seleccionados desde `localStorage`.
-- `status` se guarda como `new`.
-- RLS permite `INSERT` anonimo solo de solicitudes validas nuevas.
+- Requiere `privacy_accepted === true`.
+- Valida `event_date` estrictamente como fecha real `YYYY-MM-DD`; rechaza fechas imposibles como `2025-02-31` y texto extra.
+- RLS permite `INSERT` anonimo solo de solicitudes validas nuevas con consentimiento.
 
 Uso admin:
 
-- `/admin/cotizaciones` lista las ultimas cotizaciones.
+- `/admin/cotizaciones` lista cotizaciones sin exponer datos innecesarios en tipos de listado.
 - Filtros: `all`, `new`, `cancelled`.
 - Cancelar cotizacion actualiza `status` a `cancelled`.
-- Service role tiene acceso completo.
+
+Privacidad:
+
+- `app/aviso-de-privacidad/page.tsx` contiene aviso LFPDPPP para persona fisica.
+- El formulario de cotizacion tiene checkbox obligatorio.
+- `POST /api/quote` rechaza solicitudes sin consentimiento.
+- `/api/cron/anonymize` anonimiza cotizaciones antiguas protegido por Bearer `CRON_SECRET`.
+- `vercel.json` agenda cron mensual `0 0 1 * *`.
 
 ### `admin_audit_log`
-
-Columnas:
-
-- `id bigint identity`.
-- `admin_email text not null`.
-- `admin_user_id uuid`.
-- `action text not null`.
-- `target_table text not null`.
-- `target_id bigint`.
-- `metadata jsonb`.
-- `created_at timestamptz default now()`.
 
 Uso:
 
 - `logAdminAction()` registra acciones admin sobre productos y cotizaciones.
-- `logAdminAuthEvent()` registra login exitoso, login fallido, rate limit, rechazo por allowlist y logout.
+- `logAdminAuthEvent()` registra login exitoso, login rechazado y logout.
 - RLS habilitado; service role tiene acceso completo.
+- La migracion de hardening limita eventos autenticados y revoca ejecucion publica de funciones SECURITY DEFINER.
 
 ## Supabase Storage
 
 - Bucket por defecto: `product-images`.
 - Configurable con `NEXT_PUBLIC_PRODUCT_IMAGES_BUCKET`.
 - Bucket publico para lectura de imagenes de producto.
-- Politica Storage permite lectura anonima y operaciones completas con service role.
+- Politicas permiten lectura anonima y operaciones completas con service role.
 - Crear/editar productos intenta crear el bucket si falta.
 - Limite por imagen en codigo: 5 MB.
 - MIME permitido: `image/png`, `image/jpeg`, `image/webp`, `image/gif`.
 - Se validan magic bytes antes de subir.
-- Las URLs publicas se guardan en `products.image` y `products.gallery_images`.
-- `next.config.ts` limita Server Actions a `20mb` para soportar formularios con imagenes.
+- `next.config.ts` limita Server Actions a `10mb`.
+- `createProduct` limpia imagenes subidas si falla despues de upload.
+- `updateProduct` lee imagenes actuales desde BD y limpia imagenes huerfanas sin bloquear actualizacion.
+- `deleteProduct` limpia imagenes antes de eliminar.
 
-## Supabase Auth y seguridad admin
+## Seguridad Admin
 
-Capas de proteccion admin:
+Capas de proteccion:
 
 - `middleware.ts` protege `/admin/:path*`, excepto `/admin/login`.
-- `lib/admin/access.ts` define `isAllowedAdminUser()` usando `ADMIN_EMAILS`, `ADMIN_EMAIL` legacy y `ADMIN_USER_IDS`.
-- `app/admin/layout.tsx` valida usuario para mostrar sidebar y `SessionMonitor`.
+- Middleware agrega header interno `x-admin-pathname` para que `app/admin/layout.tsx` deje renderizar `/admin/login` sin loop.
+- `lib/admin/access.ts` valida allowlist con `ADMIN_EMAILS`, `ADMIN_EMAIL` legacy y `ADMIN_USER_IDS`.
+- `app/admin/layout.tsx` valida usuario para rutas admin protegidas y renderiza sidebar/session monitor.
 - Paginas admin que leen datos usan `getAuthenticatedAdminClient()`.
-- Server Actions admin usan `getAuthenticatedAdminContext()` y `assertSameOriginAdminAction()`.
-- Despues de validar sesion, operaciones admin usan service role server-side.
+- Server Actions usan `getAuthenticatedAdminContext()` y `assertSameOriginAdminAction()`.
+- `lib/db/supabase-admin.ts` contiene el cliente service role con `server-only`.
+- `/api/admin/session-status` valida origin y estado admin.
+
+CSRF:
+
+- `middleware.ts` crea cookie CSRF httpOnly en rutas admin GET.
+- `lib/admin/csrf.ts` define constantes y validacion basica.
+- `lib/admin/csrf-server.ts` compara cookie contra campo oculto.
+- Formularios admin incluyen campo oculto CSRF.
 
 Sesion expirada:
 
-- `app/admin/components/SessionMonitor.tsx` revisa sesion cada 10 minutos.
-- `GET /api/admin/session-status` devuelve estado de sesion admin.
-- Si expira, se muestra modal y se redirige a `/admin/login?reason=session-expired`.
-- Si una Server Action detecta sesion expirada, redirige al login con `next` apuntando a la ruta admin de referencia cuando es posible.
-- `/admin/login` muestra mensaje de sesion expirada cuando recibe `reason=session-expired`.
+- `SessionMonitor` revisa cada 10 minutos.
+- Si expira, muestra modal y redirige a `/admin/login?reason=session-expired`.
 
-Login:
-
-- `app/admin/login/LoginForm.tsx` usa `useActionState(loginAdmin, ...)`.
-- `loginAdmin()` valida origin, aplica rate limiting, autentica con Supabase y valida allowlist.
-- `logoutAdmin()` cierra sesion, registra auditoria y redirige a `/admin/login`.
-
-## Rate limiting
+## Rate Limiting
 
 Archivo: `lib/utils/rate-limit.ts`.
 
-- Wrapper sobre Upstash Redis y `@upstash/ratelimit`.
-- `/api/quote` usa limite por IP cuando Upstash esta configurado.
-- `loginAdmin()` usa limite de 5 intentos por 5 minutos por IP.
-- En produccion, login falla cerrado si falta el rate limit.
-- Para `/api/quote`, si Upstash no esta configurado, el sistema degrada sin rate limit.
+- Usa Upstash Redis cuando `UPSTASH_REDIS_REST_URL` y `UPSTASH_REDIS_REST_TOKEN` existen.
+- Si faltan en desarrollo, usa memoria local con limite de 10,000 entradas y limpieza periodica.
+- Si faltan en produccion, falla cerrado y rechaza solicitudes protegidas.
+- Si las variables existen pero son invalidas, Upstash puede lanzar `WRONGPASS`; corregir variables en Vercel o quitarlas en local.
+- `/api/quote` usa 5 requests por minuto por IP.
+- `loginAdmin()` usa 5 intentos por 5 minutos por IP.
 
-## CORS
+## CORS, Sanitizacion Y Validacion
 
-Archivo: `lib/utils/cors.ts`.
+CORS:
 
-- `getCorsOrigin()` valida el header `Origin` contra `siteConfig.allowedOrigins`.
-- `handleOptionsRequest()` responde preflight.
-- `corsSuccessResponse()` y `corsErrorResponse()` normalizan respuestas CORS.
+- `lib/utils/cors.ts` valida `Origin` contra `siteConfig.allowedOrigins`.
 - `/api/quote` rechaza origins no permitidos.
+- Endpoint admin session-status tambien valida origin.
 
-## Sanitizacion y validacion
+Sanitizacion:
 
-Archivo: `lib/utils/sanitize.ts`.
-
-Funciones principales:
-
-- `stripHtml()`.
-- `sanitizeText()`.
-- `sanitizeOptional()`.
-- `sanitizePhone()`.
-- `sanitizeEmail()`.
-- `sanitizeWhatsApp()`.
-- `sanitizeItemName()`.
-- `sanitizeProductText()`.
-
-Uso:
-
-- `/api/quote` sanitiza datos de cliente, productos y notas.
+- `lib/utils/sanitize.ts`: `stripHtml`, `sanitizeText`, `sanitizeOptional`, `sanitizePhone`, `sanitizeEmail`, `sanitizeWhatsApp`, `sanitizeItemName`, `sanitizeProductText`.
+- `/api/quote` sanitiza datos cliente, productos y notas.
+- `/api/quote` valida fechas de evento con regex ISO y round-trip UTC antes de insertar.
 - Server Actions de productos sanitizan campos admin.
-- Formularios cliente validan telefono, email y fecha antes de enviar.
-
-Tests relacionados: `lib/utils/sanitize.test.ts`.
+- Cantidad maxima local de producto: 999.
+- `formatCurrency()` maneja valores no finitos.
 
 ## Seguridad HTTP
 
 `next.config.ts` define headers globales:
 
 - CSP con `default-src 'self'`.
-- `script-src` permite Supabase; en desarrollo agrega `unsafe-inline` y `unsafe-eval`.
+- `script-src 'self' 'unsafe-inline'` y en desarrollo tambien `unsafe-eval`; permite `https://*.supabase.co`.
 - `style-src 'self' 'unsafe-inline'`.
 - `img-src 'self' data: blob: https://*.supabase.co`.
 - `font-src 'self' data:`.
@@ -288,255 +289,81 @@ Tests relacionados: `lib/utils/sanitize.test.ts`.
 - `object-src 'none'`.
 - `base-uri 'self'`.
 - `form-action 'self'`.
-- HSTS: `max-age=63072000; includeSubDomains; preload`.
-- `X-Content-Type-Options: nosniff`.
-- `X-Frame-Options: DENY`.
-- `Referrer-Policy: strict-origin-when-cross-origin`.
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+- HSTS, nosniff, DENY frame, referrer policy y permissions policy.
 
-## Estructura actual
-
-```txt
-app/
-  layout.tsx
-  page.tsx
-  loading.tsx
-  error.tsx
-  not-found.tsx
-  icon.tsx
-  robots.ts
-  sitemap.ts
-  globals.css
-  api/
-    admin/session-status/route.ts
-    quote/route.ts
-    quote/route.test.ts
-  admin/
-    layout.tsx
-    page.tsx
-    loading.tsx
-    login/
-      page.tsx
-      LoginForm.tsx
-    cotizaciones/
-      page.tsx
-      loading.tsx
-    productos/
-      page.tsx
-      loading.tsx
-      nuevo/page.tsx
-      [id]/page.tsx
-    actions/
-      admin-client.ts
-      auth.ts
-      products.ts
-      quotes.ts
-    components/
-      AdminSidebar.tsx
-      ProductForm.tsx
-      QuoteTable.tsx
-      SessionMonitor.tsx
-      StatsCards.tsx
-  catalogo/
-    page.tsx
-    loading.tsx
-  cotizacion/
-    page.tsx
-    loading.tsx
-  productos/[slug]/
-    page.tsx
-    loading.tsx
-
-components/
-  features/
-    catalog/
-      CatalogClient.tsx
-      ProductCard.tsx
-    products/
-      ProductDetailClient.tsx
-      ProductImage.tsx
-    quote/
-      AddToQuoteButton.tsx
-      QuotePageClient.tsx
-      QuoteProvider.tsx
-      QuoteProvider.test.tsx
-      QuoteSummaryButton.tsx
-  layout/
-    Header.tsx
-    Footer.tsx
-  ui/
-    Skeleton.tsx
-    Skeleton.test.tsx
-
-hooks/
-  useQuote.ts
-
-lib/
-  config.ts
-  config.test.ts
-  admin/access.ts
-  constants/categories.ts
-  constants/site.ts
-  db/products.ts
-  db/supabase.ts
-  db/supabase-server.ts
-  services/quote.service.ts
-  services/quote.service.test.ts
-  types/index.ts
-  types/product.ts
-  types/quote.ts
-  utils/cors.ts
-  utils/cors.test.ts
-  utils/currency.ts
-  utils/currency.test.ts
-  utils/rate-limit.ts
-  utils/sanitize.ts
-  utils/sanitize.test.ts
-  utils/whatsapp.ts
-
-supabase/
-  migrations/20260610120000_initial_schema_hardening.sql
-
-.github/workflows/ci.yml
-middleware.ts
-next.config.ts
-vercel.json
-vitest.config.ts
-vitest.setup.ts
-```
+Nota: `unsafe-inline` en scripts se habilito en produccion porque Next.js necesita inline bootstrap scripts para hidratar; sin esto Vercel bloqueaba la app por CSP.
 
 ## Rutas
 
-- `/`: home con hero, categorias, productos destacados y seccion “Como funciona”.
-- `/catalogo`: catalogo con productos activos y filtro por categoria via query `categoria`.
-- `/productos/[slug]`: detalle de producto activo.
-- `/cotizacion`: resumen de cotizacion, formulario, guardado en Supabase y redireccion a WhatsApp.
-- `POST /api/quote`: valida y guarda cotizaciones en `quote_requests`.
+- `/`: home con hero, categorias, productos destacados y pasos.
+- `/catalogo`: catalogo de productos activos con filtro por categoria.
+- `/productos/[slug]`: detalle de producto activo con metadata y JSON-LD dinamicos.
+- `/cotizacion`: resumen de cotizacion, formulario, consentimiento, guardado en Supabase y redireccion a WhatsApp.
+- `/aviso-de-privacidad`: aviso LFPDPPP.
+- `POST /api/quote`: valida y guarda cotizaciones.
 - `OPTIONS /api/quote`: preflight CORS.
-- `GET /api/admin/session-status`: endpoint interno para monitoreo de sesion admin.
-- `/admin/login`: acceso privado usando Supabase Auth.
-- `/admin`: dashboard administrativo con estadisticas.
-- `/admin/cotizaciones`: listado de cotizaciones y accion para cancelarlas.
-- `/admin/productos`: listado administrativo de productos.
-- `/admin/productos/nuevo`: creacion de productos con subida de imagenes.
-- `/admin/productos/[id]`: edicion de productos existentes.
-- `/robots.txt`: generado por `app/robots.ts`.
-- `/sitemap.xml`: generado por `app/sitemap.ts`.
-- `/icon`: favicon generado por `app/icon.tsx`.
+- `GET /api/admin/session-status`: monitoreo interno admin.
+- `GET /api/cron/anonymize`: cron protegido por Bearer `CRON_SECRET`.
+- `/admin/login`: login privado.
+- `/admin`: dashboard admin.
+- `/admin/cotizaciones`: listado y cancelacion de cotizaciones.
+- `/admin/productos`: listado admin de productos.
+- `/admin/productos/nuevo`: creacion de producto.
+- `/admin/productos/[id]`: edicion de producto.
+- `/robots.txt`, `/sitemap.xml`, `/icon`.
 
-## Flujo de cotizacion
+## Flujo De Cotizacion
 
-1. El usuario agrega productos desde tarjetas, catalogo o detalle.
-2. `QuoteProvider` mantiene estado de cotizacion.
-3. La cotizacion se persiste en `localStorage` con key `atelier-floral-quote`.
+1. Usuario agrega productos desde tarjetas, catalogo o detalle.
+2. `QuoteProvider` mantiene estado y persiste en `localStorage` con key `atelier-floral-quote`.
+3. La animacion `QuoteFlyToCart` vuela el producto al resumen de cotizacion. Duracion actual: 1100ms.
 4. `/cotizacion` muestra productos, cantidades, subtotal y total de piezas.
-5. El usuario completa datos personales y de evento.
-6. El formulario cliente valida campos basicos localmente.
-7. Se envia `POST /api/quote`.
-8. `/api/quote` aplica CORS, rate limiting opcional, validacion y sanitizacion.
-9. Se inserta `quote_requests` usando Supabase anon key y RLS.
-10. Se genera un mensaje con `buildWhatsAppMessage()`.
-11. Se abre WhatsApp con `getWhatsAppUrl()`.
-12. Se limpia la cotizacion local.
+5. Usuario completa datos y acepta aviso de privacidad.
+6. Cliente valida nombre, telefono, email, items y consentimiento.
+7. `POST /api/quote` aplica CORS, rate limiting, validacion, sanitizacion y consentimiento.
+8. Inserta en `quote_requests` con Supabase anon key y RLS.
+9. Genera mensaje con `buildWhatsAppMessage()` y abre URL con `getWhatsAppUrl()`.
+10. Limpia cotizacion local.
 
-## Flujo admin
+## Flujo Admin
 
-1. El administrador entra a `/admin/login`.
-2. `loginAdmin()` valida origin y rate limit.
-3. Supabase Auth autentica email/password.
-4. `isAllowedAdminUser()` valida allowlist.
-5. `middleware.ts` permite `/admin/*` solo a usuarios admin permitidos.
-6. `SessionMonitor` revisa sesion cada 10 minutos mientras se trabaja.
-7. Dashboard consulta estadisticas con cliente admin server-side.
-8. Cotizaciones se listan desde `quote_requests` y pueden cancelarse.
-9. Productos se listan desde `products` y pueden crearse, editarse o eliminarse.
-10. Imagenes se suben desde Server Actions al bucket configurado.
-11. Acciones sensibles se registran en `admin_audit_log`.
+1. Admin entra a `/admin/login`.
+2. `loginAdmin()` valida CSRF/origin, aplica rate limiting y autentica con Supabase.
+3. `isAllowedAdminUser()` valida email o UID.
+4. Middleware protege `/admin/*`.
+5. Dashboard consulta estadisticas con `count: "estimated"`.
+6. Cotizaciones se listan y pueden cancelarse.
+7. Productos se crean, editan o eliminan.
+8. Imagenes se suben a Storage desde Server Actions.
+9. Acciones sensibles se registran en `admin_audit_log`.
 
-## Catalogo y productos publicos
-
-- `lib/db/products.ts` contiene `getActiveProducts()`, `getFeaturedProducts()` y `getProductBySlug()`.
-- Usa cliente Supabase anonimo.
-- En error devuelve valores seguros (`[]` o `null`) y registra en consola.
-- `/catalogo` obtiene productos activos en Server Component.
-- `CatalogClient` filtra por categoria en cliente y sincroniza query param `categoria`.
-- `ProductCard` muestra imagen, categoria, precio y acciones de cotizacion.
-- `ProductDetailClient` maneja galeria, cantidad y CTA de WhatsApp/cotizacion.
-- `ProductImage` envuelve `next/image` con fallback visual.
-
-## Tipos principales
-
-`lib/types/product.ts`:
-
-- `ProductCategory`: `Velas | Suculentas | Recuerdos | Kits | Personalizados`.
-- `Product.id`: `number`.
-- `Product.price`, `stock`, `featured`, `active`: aceptan null segun respuesta Supabase.
-- `Product.materials`: `string[] | string | null` por compatibilidad de datos.
-
-`lib/types/quote.ts`:
-
-- `QuoteItem.productId`: `number`.
-- `QuoteItem.quantity`: cantidad local, maximo validado 999.
-- `QuoteRequestInsert`: payload insertado en `quote_requests`.
-- `QuoteRequest`: incluye `id` y `created_at`.
-- `QuoteFormData`: estado del formulario cliente.
-
-## Imagenes y assets
-
-Imagenes locales esperadas:
+## Archivos Importantes
 
 ```txt
-public/images/hero.png
-public/images/categories/velas.png
-public/images/categories/suculentas.png
-public/images/categories/recuerdos.png
-public/images/categories/kits.png
-public/images/categories/personalizados.png
+app/layout.tsx                         # metadata base, OG/Twitter, JSON-LD global
+app/catalogo/page.tsx                  # catalogo + metadata SEO
+app/productos/[slug]/page.tsx          # detalle + metadata/JSON-LD Product
+app/cotizacion/page.tsx                # pagina cotizacion
+app/aviso-de-privacidad/page.tsx       # aviso LFPDPPP
+app/api/quote/route.ts                 # API publica cotizaciones
+app/api/cron/anonymize/route.ts        # cron anonimizar
+app/admin/layout.tsx                   # layout admin protegido
+app/admin/actions/*.ts                 # Server Actions admin
+components/features/quote/*            # cotizacion local y animacion
+lib/config.ts                          # configuracion centralizada
+lib/db/products.ts                     # queries publicas optimizadas de productos
+lib/db/product-columns.ts              # columnas seleccionadas por contexto
+lib/db/supabase.ts                     # cliente anon
+lib/db/supabase-server.ts              # cliente SSR por sesion
+lib/db/supabase-admin.ts               # service role server-only
+lib/admin/*                            # access + CSRF
+middleware.ts                          # admin auth + CSRF cookie
+next.config.ts                         # CSP, headers, imagenes, server actions
+vercel.json                            # cron mensual
+supabase/migrations/*.sql              # esquema, hardening, privacidad
 ```
 
-Imagenes de productos:
-
-- Vienen desde Supabase Storage.
-- Se guardan como URLs publicas en Supabase.
-- `next.config.ts` calcula el hostname permitido desde `NEXT_PUBLIC_SUPABASE_URL`.
-
-## SEO y metadata tecnica
-
-- `app/icon.tsx` genera favicon alineado a la paleta.
-- `app/robots.ts` permite el sitio y bloquea `/api/`.
-- `app/sitemap.ts` genera sitemap con rutas publicas principales.
-- `app/error.tsx` muestra fallback global con boton de reintento.
-- `app/not-found.tsx` muestra 404 con enlaces a catalogo/home.
-- Cada segmento importante tiene `loading.tsx` con skeletons.
-
-## Diseno
-
-Estetica esperada:
-
-- Elegante.
-- Artesanal.
-- Calida.
-- Femenina.
-- Premium.
-- Mobile-first.
-
-Paleta Tailwind actual:
-
-- `cream`.
-- `beige`.
-- `blush`.
-- `sage`.
-- `gold`.
-- `coffee`.
-- `ink`.
-
-Componentes UI compartidos actuales:
-
-- `components/ui/Skeleton.tsx`.
-
-Nota: `Badge`, `Button` e `Input` ya no existen en `components/ui`.
-
-## Testing
+## Testing Y Verificacion
 
 Framework:
 
@@ -545,15 +372,13 @@ Framework:
 - jsdom.
 - `@testing-library/jest-dom`.
 
-Configuracion:
-
-- `vitest.config.ts` usa `vmThreads`, `fileParallelism: false`, `globals: true` y alias `@` al root.
-- `vitest.setup.ts` configura setup global.
-
-Tests actuales:
+Tests relevantes:
 
 - `app/api/quote/route.test.ts`.
+- `app/api/cron/anonymize/route.test.ts`.
 - `components/features/quote/QuoteProvider.test.tsx`.
+- `components/features/quote/QuoteFlyToCart.test.tsx`.
+- `components/features/quote/quoteFlyAnimation.test.ts`.
 - `components/ui/Skeleton.test.tsx`.
 - `lib/config.test.ts`.
 - `lib/services/quote.service.test.ts`.
@@ -561,89 +386,57 @@ Tests actuales:
 - `lib/utils/currency.test.ts`.
 - `lib/utils/sanitize.test.ts`.
 
-Scripts:
-
-```bash
-npm test
-npm run test:watch
-npm run test:coverage
-```
-
-Estado mas reciente verificado en esta sesion:
-
-- `npm run typecheck`: OK.
-- `npm run lint`: OK.
-- `npm test`: OK, 8 archivos y 47 tests.
-
-## Configuracion Next.js
-
-- `experimental.serverActions.bodySizeLimit` configurado en `20mb`.
-- `images.remotePatterns` permite imagenes HTTPS del hostname Supabase derivado de `NEXT_PUBLIC_SUPABASE_URL`.
-- Fallback de hostname: `*.supabase.co`.
-- Headers de seguridad globales en `headers()`.
-- `app/layout.tsx` usa `suppressHydrationWarning` en `<html>`.
-- Si se cambia `next.config.ts` o variables de entorno, reiniciar `npm run dev`.
-
-## CI/CD y deploy
-
-GitHub Actions: `.github/workflows/ci.yml`.
-
-- Corre en pull requests y push a `main`.
-- Usa Node desde `.nvmrc`.
-- Pasos: `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
-
-Vercel: `vercel.json`.
-
-- Framework: `nextjs`.
-- Build: `npm run build`.
-- Install: `npm install`.
-
-Node local recomendado:
-
-- `.nvmrc` define Node 22.
-- En WSL, usar Node instalado dentro de WSL mediante `nvm`.
-- No mezclar shell WSL con `node.exe`/`npm` de Windows.
-- Si aparecen 404 de chunks/assets en desarrollo, detener `npm run dev`, borrar `.next` y reiniciar con Node de WSL.
-
-## Comandos de verificacion
-
-Ejecutar despues de cambios importantes:
+Comandos:
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
 npm run build
 ```
 
-Para cambios de seguridad/autenticacion, probar manualmente:
+Ultimas verificaciones durante esta sesion:
 
-- Login admin valido.
-- Login admin no allowlisted.
-- Logout.
-- Sesion expirada en formulario admin.
-- Crear producto sin imagen.
-- Crear producto con imagen valida.
-- Crear producto con imagen mayor a 5 MB.
-- Enviar cotizacion publica.
+- `npm run typecheck`: OK.
+- `npm run lint`: OK.
+- `npm test`: OK, 11 archivos y 61 tests.
+- `npm run build`: OK.
 
-## Gotchas y decisiones importantes
+## CI/CD Y Deploy
 
-- No agregar pagos ni checkout tradicional salvo instruccion explicita.
-- No agregar cuentas de cliente.
-- Publico usa anon key; seguridad depende de RLS.
-- Admin usa session Supabase + allowlist + service role server-side.
-- `SUPABASE_SERVICE_ROLE_KEY` nunca debe aparecer en cliente ni en variables `NEXT_PUBLIC_`.
-- Product IDs se tipan como `number`; DB usa `bigint identity`, pero la app asume IDs dentro del rango seguro de JS.
+GitHub Actions: `.github/workflows/ci.yml`.
+
+- Corre en PRs y push a `main`.
+- Pasos: `npm ci`, lint, typecheck, tests y build.
+
+Vercel:
+
+- `vercel.json` usa framework Next.js, build `npm run build`, install `npm install`.
+- Cron mensual: `/api/cron/anonymize` con schedule `0 0 1 * *`.
+- Los pushes a `main` disparan deploy.
+- Para que el dominio de sitemap/canonical sea correcto, configurar `NEXT_PUBLIC_SITE_URL` en Vercel o usar el fallback actual.
+
+## Gotchas Y Decisiones Importantes
+
+- `.next` local esta ignorado por git y no se sube a Vercel.
+- Vercel construye su propia `.next` en servidores.
+- No correr `npm run build` mientras `npm run dev` esta activo; puede corromper chunks locales. Si pasa, detener dev, borrar `.next` y reiniciar.
+- Google Search Console por URL prefix debe usar `https://atelierfloralpaos-tau.vercel.app/`; no usar verificacion DNS para `vercel.app` porque ese dominio no pertenece al proyecto.
+- `sitemap.xml` debe tener URLs del mismo dominio verificado.
+- Search Console puede tardar horas o dias en procesar sitemaps aunque el XML ya sea correcto.
+- SEO tecnico no garantiza aparecer inmediatamente en primeros resultados; indexacion y posicionamiento toman tiempo.
+- Product IDs se tipan como `number`; DB usa `bigint identity`, pero se asume rango seguro de JS.
 - `QuoteProvider` migra `productId` string legacy de `localStorage` a number.
-- Limite de Server Action: 20 MB por request; limite por imagen: 5 MB.
-- Login admin en produccion requiere Upstash para no fallar cerrado.
-- `/api/quote` permite degradar sin rate limit si Upstash no esta configurado.
 - Cambios en RLS, constraints o Storage deben pasar por migracion SQL revisable.
+- Migrar columnas existentes con `ALTER COLUMN TYPE` puede tomar lock exclusivo; para tablas grandes futuras preferir patron zero-downtime con columna nueva, backfill por lotes y swap.
 
-## Pendientes naturales
+## Pendientes Naturales
 
-- Confirmar que la migracion `supabase/migrations/20260610120000_initial_schema_hardening.sql` este aplicada en el proyecto Supabase de produccion.
-- Verificar periodicamente que RLS y politicas Storage sigan alineadas con el codigo.
-- Considerar alertas/observabilidad para errores de `admin_audit_log`, Storage y Supabase inserts.
-- Considerar `Cache-Control: no-store, private` en respuestas admin si se introduce CDN/cache adicional delante de Vercel.
+- Confirmar que todas las migraciones Supabase esten aplicadas en produccion.
+- Confirmar variables Vercel: `PRIVACY_EMAIL`, `CRON_SECRET`, `ADMIN_EMAILS`/`ADMIN_USER_IDS`, Supabase keys, WhatsApp phone, Upstash si se usa.
+- Reenviar `/sitemap.xml` en Search Console despues de cada cambio grande de dominio/sitemap.
+- Monitorear Search Console por errores de rastreo e indexacion.
+- Considerar dominio propio cuando sea prioridad comercial.
+- Considerar Google Business Profile para busquedas locales.
+- Considerar observabilidad para errores de Supabase, Storage, cron y admin audit log.

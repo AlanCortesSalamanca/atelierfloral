@@ -2,14 +2,13 @@ import { notFound } from "next/navigation";
 import { getAuthenticatedAdminClient } from "@/app/admin/actions/admin-client";
 import { ProductForm } from "@/app/admin/components/ProductForm";
 import { getAdminCsrfToken } from "@/lib/admin/csrf-server";
+import { PRODUCT_ADMIN_COLUMNS } from "@/lib/db/product-columns";
 import type { Product } from "@/lib/types";
-
-const productColumns = "id, name, slug, category, price, description, stock, featured, image, gallery_images, materials, fragrance, dimensions, handcrafted_details, created_at, active";
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await getAuthenticatedAdminClient();
-  const { data, error } = await supabase.from("products").select(productColumns).eq("id", id).single();
+  const { data, error } = await supabase.from("products").select(PRODUCT_ADMIN_COLUMNS).eq("id", id).single();
 
   if (error) {
     console.error("[EditProductPage] Supabase error:", error.message);

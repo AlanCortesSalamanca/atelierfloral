@@ -4,6 +4,15 @@ import { createRateLimit } from "@/lib/utils/rate-limit";
 import { sanitizeEmail, sanitizeItemName, sanitizeOptional, sanitizePhone } from "@/lib/utils/sanitize";
 import type { QuoteItem, QuoteRequestInsert } from "@/lib/types";
 
+const eventDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidEventDate(value: string) {
+  if (!eventDatePattern.test(value)) return false;
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 function isQuoteItem(item: unknown): item is QuoteItem {
   if (!item || typeof item !== "object") return false;
   const value = item as Record<string, unknown>;
@@ -73,7 +82,8 @@ export async function POST(request: Request) {
     return corsSuccessResponse({ error: "Email inválido" }, origin, 400);
   }
 
-  if (body.event_date && typeof body.event_date === "string" && Number.isNaN(new Date(body.event_date).getTime())) {
+  const eventDate = sanitizeOptional(body.event_date, 30);
+  if (eventDate && !isValidEventDate(eventDate)) {
     return corsSuccessResponse({ error: "Fecha de evento inválida" }, origin, 400);
   }
 
@@ -100,7 +110,7 @@ export async function POST(request: Request) {
     customer_instagram: sanitizeOptional(body.customer_instagram, 80),
     customer_email: cleanedEmail || null,
     event_type: sanitizeOptional(body.event_type, 120),
-    event_date: sanitizeOptional(body.event_date, 30),
+    event_date: eventDate,
     custom_notes: sanitizeOptional(body.custom_notes, 800),
   };
 

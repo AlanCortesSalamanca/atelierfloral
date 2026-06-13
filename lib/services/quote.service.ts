@@ -1,8 +1,8 @@
-import type { Product, QuoteFormData, QuoteItem } from "@/lib/types";
+import type { QuotableProduct, QuoteFormData, QuoteItem } from "@/lib/types";
 import { sanitizeItemName, sanitizeWhatsApp } from "@/lib/utils/sanitize";
 import { formatCurrency } from "@/lib/utils/currency";
 
-export function productToQuoteItem(product: Product, quantity = 1): QuoteItem {
+export function productToQuoteItem(product: QuotableProduct, quantity = 1): QuoteItem {
   return {
     productId: product.id,
     slug: sanitizeItemName(product.slug),

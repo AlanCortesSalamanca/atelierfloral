@@ -4,9 +4,9 @@ import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/features/catalog/ProductCard";
 import { productCategories } from "@/lib/constants/categories";
-import type { Product } from "@/lib/types";
+import type { ProductSummary } from "@/lib/types";
 
-export function CatalogClient({ products, initialCategory = "Todos" }: { products: Product[]; initialCategory?: string }) {
+export function CatalogClient({ products, initialCategory = "Todos" }: { products: ProductSummary[]; initialCategory?: string }) {
   const categories = productCategories;
   const normalizedInitialCategory = categories.includes(initialCategory as (typeof categories)[number]) ? initialCategory : "Todos";
   const pathname = usePathname();

@@ -20,6 +20,7 @@ export type QuoteRequestInsert = {
   customer_instagram?: string | null;
   customer_email?: string | null;
   event_type?: string | null;
+  /** PostgreSQL date column represented as YYYY-MM-DD over the Supabase JSON API. */
   event_date?: string | null;
   custom_notes?: string | null;
 };
