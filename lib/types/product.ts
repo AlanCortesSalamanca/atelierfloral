@@ -18,3 +18,7 @@ export type Product = {
   slug: string;
   active: boolean | null;
 };
+
+export type ProductSummary = Pick<Product, "id" | "name" | "category" | "price" | "description" | "stock" | "featured" | "image" | "created_at" | "slug">;
+
+export type QuotableProduct = Pick<Product, "id" | "slug" | "name" | "category" | "price" | "image">;

@@ -1,4 +1,4 @@
-import type { Product } from "@/lib/types";
+import type { QuotableProduct } from "@/lib/types";
 
 export const quoteFlyAnimationEvent = "atelier-floral:quote-fly";
 export const quoteFlyTargetSelector = "[data-quote-summary-target]";
@@ -18,7 +18,7 @@ function getProductImageSource(element: HTMLElement) {
     element;
 }
 
-export function dispatchQuoteFlyAnimation(product: Product, sourceElement: HTMLElement, image = product.image) {
+export function dispatchQuoteFlyAnimation(product: QuotableProduct, sourceElement: HTMLElement, image = product.image) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const source = getProductImageSource(sourceElement);

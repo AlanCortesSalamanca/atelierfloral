@@ -2,12 +2,12 @@
 
 import { createContext, useEffect, useState } from "react";
 import { QuoteFlyToCart } from "@/components/features/quote/QuoteFlyToCart";
-import type { Product, QuoteItem } from "@/lib/types";
+import type { QuotableProduct, QuoteItem } from "@/lib/types";
 import { getQuotePieces, getQuoteSubtotal, productToQuoteItem } from "@/lib/services/quote.service";
 
 export type QuoteContextValue = {
   items: QuoteItem[];
-  addProduct: (product: Product, quantity?: number) => void;
+  addProduct: (product: QuotableProduct, quantity?: number) => void;
   increase: (productId: number) => void;
   decrease: (productId: number) => void;
   remove: (productId: number) => void;
@@ -86,7 +86,7 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, loaded]);
 
-  function addProduct(product: Product, quantity = 1) {
+  function addProduct(product: QuotableProduct, quantity = 1) {
     const productId = product.id;
     const safeQuantity = Math.max(1, Math.min(999, quantity));
 

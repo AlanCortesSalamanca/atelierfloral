@@ -1,10 +1,10 @@
 "use client";
 
-import type { Product } from "@/lib/types";
+import type { QuotableProduct } from "@/lib/types";
 import { useQuote } from "@/hooks/useQuote";
 import { dispatchQuoteFlyAnimation } from "@/components/features/quote/quoteFlyAnimation";
 
-export function AddToQuoteButton({ product, quantity = 1, compact = false }: { product: Product; quantity?: number; compact?: boolean }) {
+export function AddToQuoteButton({ product, quantity = 1, compact = false }: { product: QuotableProduct; quantity?: number; compact?: boolean }) {
   const { addProduct } = useQuote();
 
   return (

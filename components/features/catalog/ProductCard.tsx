@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { AddToQuoteButton } from "@/components/features/quote/AddToQuoteButton";
 import { ProductImage } from "@/components/features/products/ProductImage";
-import type { Product } from "@/lib/types";
+import type { ProductSummary } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils/currency";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product }: { product: ProductSummary }) {
   return (
     <article data-product-card className="tap-motion button-soft group overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-card hover:shadow-soft">
       <Link href={`/productos/${product.slug}`} className="tap-motion focus-gold block rounded-t-[2rem]">
